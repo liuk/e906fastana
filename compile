@@ -1,0 +1,49 @@
+#!/usr/bin/python
+
+import os
+import sys
+import re
+
+# compile with ROOT, Geant4, MySQL and BOOST
+def compile(filename):
+	## ROOT part
+    cflags = os.popen('root-config --cflags').readline().strip()
+    ldflags = os.popen('root-config --ldflags --libs').readline().strip()
+
+    ## basic
+    ldflags = ldflags + ' -L./ -lAnaUtil'
+    if os.path.exists('kTracker/libkTracker.so'):
+        os.system('cp kTracker/libkTracker.so .')
+        ldflags = ldflags + ' -L./ -lkTracker'
+
+    ## data version
+    cflags = cflags + ' -D' + dataset
+
+    os.system('g++ '+cflags+' -c '+filename+'.cxx')
+    os.system('g++ -o '+filename+' '+filename+'.o '+ldflags)
+    os.system('rm '+filename+'.o')
+
+# make sure it exists
+if not os.path.isfile(sys.argv[1].replace('.cxx', '')+'.cxx'):
+    print 'File does not exist!'
+    sys.exit(1)
+
+# extract the path and source file name
+args = re.split('/', sys.argv[1])
+targetName = args[-1].replace('.cxx', '')
+sourceName = targetName + '.cxx'
+sourcePath = sys.argv[1].replace('.cxx', '').replace(targetName, '')
+
+dataset = 'ALL'
+if len(sys.argv) > 2:
+    dataset = sys.argv[2].upper()
+
+# copy the source file to KTRACKER_ROOT, compile an delete it afterwards
+if len(args) == 1 or (len(args) == 2 and args[0] == '.'):
+    compile(targetName)
+elif os.path.isfile(sourceName):
+    print 'File already exists in both KTRACKER_ROOT and '+sys.argv[1].replace(sourceName, '')+'!! Please check.'
+else:
+    os.system('cp '+sourcePath+'/'+sourceName+' '+sourceName)
+    compile(targetName)
+    os.system('rm '+sourceName)
