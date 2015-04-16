@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
   	spillTree->Branch("spill", &p_spill, 256000, 99);
 
   	//Connect to server
-  	TSQLServer* server = TSQLServer::Connect(Form("mysql://%s", argv[3]), "seaguest", "qqbar2mu+mu-");
+  	TSQLServer* server = TSQLServer::Connect(Form("mysql://%s", argv[3]), "", "");
   	server->Exec(Form("USE %s", argv[1]));
   	cout << "Reading schema " << argv[1] << " and save to " << argv[2] << endl;
 
