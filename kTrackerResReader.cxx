@@ -17,8 +17,8 @@ int main(int argc, char* argv[])
 	// input data structure
 	SRecEvent* recEvent = new SRecEvent;
 
-	TFile* dataFile = new TFile(argv[1], "READ");
-	TTree* dataTree = (TTree*)dataFile->Get("save");
+	TFile* dataFile = new TFile(argv[2], "READ");
+	TTree* dataTree = (TTree*)dataFile->Get(argv[1]);
 
 	dataTree->SetBranchAddress("recEvent", &recEvent);
 	
@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
 	Track* p_posTrack = new Track; Track& posTrack = *p_posTrack;
 	Track* p_negTrack = new Track; Track& negTrack = *p_negTrack;
 
-	TFile* saveFile = new TFile(argv[2], "recreate");
+	TFile* saveFile = new TFile(argv[3], "recreate");
 	TTree* saveTree = new TTree("save", "save");
 
 	saveTree->Branch("dimuon", &p_dimuon, 256000, 99);
@@ -78,9 +78,13 @@ int main(int argc, char* argv[])
 			event.weight = rawMCEvent->weight;
 			event.MATRIX1 = rawMCEvent->isEmuTriggered() ? 1 : -1;
 		}
-		else
+		else if(dataEvent)
 		{
 			event.MATRIX1 = recEvent->isTriggeredBy(SRawEvent::MATRIX1) ? 1 : -1;
+		}
+		else
+		{
+			event.MATRIX1 = 1;
 		}
 
 		spill.spillID = recEvent->getSpillID();
