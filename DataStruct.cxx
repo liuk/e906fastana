@@ -13,6 +13,9 @@ ClassImp(Track)
 #define SPILLID_MIN_62 409563
 #define SPILLID_MAX_62 484924
 
+Event::Event() : runID(-1), spillID(-1), eventID(-1), MATRIX1(-1), weight(1.), intensity(0.)
+{}
+
 bool Event::goodEvent()
 {
 	return MATRIX1 > 0;
@@ -39,6 +42,9 @@ bool Dimuon::targetDimuon()
 	if(dz > -90. || dz < -300.) return false;
 	return true;
 }
+
+Spill::Spill() : spillID(-1), targetPos(-1), TARGPOS_CONTROL(-1)
+{}
 
 bool Spill::goodSpill()
 {

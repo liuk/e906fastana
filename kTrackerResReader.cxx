@@ -3,6 +3,7 @@
 #include <TROOT.h>
 #include <TFile.h>
 #include <TTree.h>
+#include <TString.h>
 
 #include "kTracker/SRawEvent.h"
 #include "kTracker/SRecEvent.h"
@@ -20,6 +21,27 @@ int main(int argc, char* argv[])
 	TTree* dataTree = (TTree*)dataFile->Get("save");
 
 	dataTree->SetBranchAddress("recEvent", &recEvent);
+	
+	//check if raw event exists
+	bool mcEvent = false;
+	bool dataEvent = false;
+	SRawEvent* rawEvent;
+	SRawMCEvent* rawMCEvent;
+	if(dataTree->FindBranch("rawEvent") != NULL)
+	{
+		if(TString(dataTree->FindBranch("rawEvent")->GetClassName()) == "SRawMCEvent")
+		{
+			rawMCEvent = new SRawMCEvent;
+			dataTree->SetBranchAddress("rawEvent", &rawMCEvent);
+			mcEvent = true;
+		}
+		else
+		{
+			rawEvent = new SRawEvent;
+			dataTree->SetBranchAddress("rawEvent", &rawEvent);
+			dataEvent = true;
+		}
+	}
 
 	// output data structure
 	Dimuon* p_dimuon = new Dimuon; Dimuon& dimuon = *p_dimuon;
@@ -50,8 +72,17 @@ int main(int argc, char* argv[])
 		event.runID = recEvent->getRunID();
 		event.spillID = recEvent->getSpillID();
 		event.eventID = recEvent->getEventID();
-		event.MATRIX1 = recEvent->isTriggeredBy(SRawEvent::MATRIX1) ? 1 : -1;
-		event.intensity = 0;
+		event.intensity = dataEvent ? rawEvent->getIntensity() : 0;
+		if(mcEvent) 
+		{
+			event.weight = rawMCEvent->weight;
+			event.MATRIX1 = rawMCEvent->isEmuTriggered() ? 1 : -1;
+		}
+		else
+		{
+			event.MATRIX1 = recEvent->isTriggeredBy(SRawEvent::MATRIX1) ? 1 : -1;
+		}
+
 		spill.spillID = recEvent->getSpillID();
 		spill.targetPos = recEvent->getTargetPos();
 		spill.TARGPOS_CONTROL = recEvent->getTargetPos();

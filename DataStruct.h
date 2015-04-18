@@ -10,6 +10,7 @@
 class Event : public TObject
 {
 public:
+	Event();
 	bool goodEvent();
 	void log(TString info) { std::cout << "RunID " << runID << ", spillID " << spillID << ", eventID " << eventID << ": " << info << std::endl; }
 
@@ -19,9 +20,10 @@ public:
 	int eventID;
 
 	int MATRIX1;
+	float weight;
 	float intensity;
 
-	ClassDef(Event, 1)
+	ClassDef(Event, 2)
 };
 
 class Dimuon : public TObject
@@ -45,6 +47,7 @@ public:
 class Spill : public TObject
 {
 public:
+	Spill();
 	bool goodSpill();
 	bool goodTargetPos();
 	bool goodTSGo();
