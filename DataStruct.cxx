@@ -43,6 +43,12 @@ bool Dimuon::targetDimuon()
 	return true;
 }
 
+bool Dimuon::dumpDimuon()
+{
+    if(dz < 0. || dz > 150.) return false;
+    return true;
+}
+
 Spill::Spill() : spillID(-1), targetPos(-1), TARGPOS_CONTROL(-1)
 {}
 
@@ -190,5 +196,14 @@ bool Track::targetTrack()
 	//	9.4431 - 0.356141*pz0 + 0.00566071*pz0*pz0 - 3.05556E-5*pz0*pz0*pz0) return false;
 
 	return true;
+}
+
+bool Track::dumpTrack()
+{
+    if(z_vertex <= 0. && z_vertex >= 150.) return false;
+    if(sqrt(x_target*x_target + y_target*y_target) - sqrt(x_dump*x_dump + y_dump*y_dump) <
+        9.4431 - 0.356141*pz_vertex + 0.00566071*pz_vertex*pz_vertex - 3.05556E-5*pz_vertex*pz_vertex*pz_vertex) return false;
+
+    return true;
 }
 

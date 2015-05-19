@@ -31,6 +31,7 @@ class Dimuon : public TObject
 public:
 	bool goodDimuon();
 	bool targetDimuon();
+    bool dumpDimuon();
 
 public:
 	int dimuonID;
@@ -85,6 +86,7 @@ class Track : public TObject
 public:
 	bool goodTrack();
 	bool targetTrack();
+    bool dumpTrack();
 
 public:
 	int trackID;
