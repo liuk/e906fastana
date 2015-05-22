@@ -125,6 +125,7 @@ int main(int argc, char* argv[])
 
 			SRecTrack recPosTrack = recEvent->getTrack(dimuon.posTrackID);
 			posTrack.trackID = recDimuon.trackID_pos;
+            posTrack.triggerID = recPosTrack.getTriggerRoad();
 			posTrack.charge = 1;
 			posTrack.nHits = recPosTrack.getNHits();
 			posTrack.chisq = recPosTrack.getChisq();
@@ -163,6 +164,7 @@ int main(int argc, char* argv[])
 
 			SRecTrack recNegTrack = recEvent->getTrack(dimuon.negTrackID);
 			negTrack.trackID = recDimuon.trackID_neg;
+            negTrack.triggerID = recNegTrack.getTriggerRoad();
 			negTrack.charge = -1;
 			negTrack.nHits = recNegTrack.getNHits();
 			negTrack.chisq = recNegTrack.getChisq();
