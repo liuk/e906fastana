@@ -205,7 +205,7 @@ int main(int argc, char* argv[])
 
 	    //track info
 	    sprintf(query, "SELECT numHits,chisq,x1,y1,z1,x3,y3,z3,x0,y0,z0,x_target,y_target,"
-	    	"z_target,x_dump,y_dump,z_dump,px1,py1,pz1,px3,py3,pz3,px0,py0,pz0,triggerID FROM kTrack "
+	    	"z_target,x_dump,y_dump,z_dump,px1,py1,pz1,px3,py3,pz3,px0,py0,pz0,roadID FROM kTrack "
 	    	"WHERE runID=%d AND eventID=%d AND trackID in (%d,%d) ORDER BY charge DESC", 
 	    	event.runID, event.eventID, dimuon.posTrackID, dimuon.negTrackID);
 
