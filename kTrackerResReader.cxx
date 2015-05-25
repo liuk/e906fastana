@@ -59,6 +59,8 @@ int main(int argc, char* argv[])
     saveTree->Branch("posTrack", &p_posTrack, 256000, 99);
     saveTree->Branch("negTrack", &p_negTrack, 256000, 99);
 
+    spill.mcflag = mcEvent;
+
     int nDimuons = 0;
     double x_dummy, y_dummy, z_dummy;
     for(int i = 0; i < dataTree->GetEntries(); ++i)

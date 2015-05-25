@@ -1,5 +1,7 @@
 void analysis_example()
 {
+    gSystem->Load("libAnaUtil.so");
+
     // define the output file structure
     Dimuon* p_dimuon = new Dimuon; Dimuon& dimuon = *p_dimuon;
     Spill* p_spill = new Spill; Spill& spill = *p_spill;
@@ -7,7 +9,7 @@ void analysis_example()
     Track* p_posTrack = new Track; Track& posTrack = *p_posTrack;
     Track* p_negTrack = new Track; Track& negTrack = *p_negTrack;
 
-    TFile* dataFile = new TFile(argv[1], "READ");
+    TFile* dataFile = new TFile("data.root", "READ");
     TTree* dataTree = (TTree*)dataFile->Get("save");
 
     dataTree->SetBranchAddress("dimuon", &p_dimuon);
