@@ -128,7 +128,7 @@ int main(int argc, char* argv[])
             spill.print();
         }
     }
-    delete res_spill;
+    delete res;
 
     cout << "sqlReader finished successfully." << endl;
     cout << nGoodSpill << " good spills, " << nBadSpill_record << " spills have insufficient info in database, " << nBadSpill_quality << " rejected because of bad quality." << endl;
