@@ -130,6 +130,11 @@ int main(int argc, char* argv[])
             posTrack.triggerID = recPosTrack.getTriggerRoad();
             posTrack.charge = 1;
             posTrack.nHits = recPosTrack.getNHits();
+            posTrack.nHitsSt1 = recPosTrack.getNHitsInStation(1);
+            posTrack.nHitsSt2 = recPosTrack.getNHitsInStation(2);
+            posTrack.nHitsSt3 = recPosTrack.getNHitsInStation(3);
+            posTrack.nHitsSt4H = recPosTrack.getNHitsInPTY();
+            posTrack.nHitsSt4V = recPosTrack.getNHitsInPTX();
             posTrack.chisq = recPosTrack.getChisq();
             posTrack.px0 = recDimuon.p_pos.Px();
             posTrack.py0 = recDimuon.p_pos.Py();
@@ -169,6 +174,11 @@ int main(int argc, char* argv[])
             negTrack.triggerID = recNegTrack.getTriggerRoad();
             negTrack.charge = -1;
             negTrack.nHits = recNegTrack.getNHits();
+            negTrack.nHitsSt1 = recNegTrack.getNHitsInStation(1);
+            negTrack.nHitsSt2 = recNegTrack.getNHitsInStation(2);
+            negTrack.nHitsSt3 = recNegTrack.getNHitsInStation(3);
+            negTrack.nHitsSt4H = recNegTrack.getNHitsInPTY();
+            negTrack.nHitsSt4V = recNegTrack.getNHitsInPTX();
             negTrack.chisq = recNegTrack.getChisq();
             negTrack.px0 = recDimuon.p_neg.Px();
             negTrack.py0 = recDimuon.p_neg.Py();
@@ -204,7 +214,9 @@ int main(int argc, char* argv[])
             negTrack.z_st3 = 1900.;
 
             saveTree->Fill();
-        }   
+        }
+
+        recEvent->clear();   
     }
 
     saveFile->cd();

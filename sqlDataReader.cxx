@@ -212,7 +212,7 @@ int main(int argc, char* argv[])
         else
         {
             sprintf(query, "SELECT a.MATRIX1,b.targetPos,c.sigWeight FROM Event AS a,Spill AS b,mDimuon AS c "
-                " WHERE a.runID=%d AND a.eventID=%d AND b.runID=%d AND b.eventID=%d AND c.runID=%d AND c.eventID=%d", 
+                "WHERE a.runID=%d AND a.eventID=%d AND b.runID=%d AND b.eventID=%d AND c.runID=%d AND c.eventID=%d", 
                 event.runID, event.eventID, event.runID, event.eventID, event.runID, event.eventID);
             TSQLResult* res_event = server->Query(query);
             if(res_event->GetRowCount() != 1)
@@ -235,7 +235,8 @@ int main(int argc, char* argv[])
 
         //track info
         sprintf(query, "SELECT numHits,chisq,x1,y1,z1,x3,y3,z3,x0,y0,z0,x_target,y_target,"
-            "z_target,x_dump,y_dump,z_dump,px1,py1,pz1,px3,py3,pz3,px0,py0,pz0,roadID FROM kTrack "
+            "z_target,x_dump,y_dump,z_dump,px1,py1,pz1,px3,py3,pz3,px0,py0,pz0,roadID,"
+            "numHitsSt1,numHitsSt2,numHitsSt3,numHitsSt4H,numHitsSt4V FROM kTrack "
             "WHERE runID=%d AND eventID=%d AND trackID in (%d,%d) ORDER BY charge DESC", 
             event.runID, event.eventID, dimuon.posTrackID, dimuon.negTrackID);
 
@@ -278,6 +279,11 @@ int main(int argc, char* argv[])
         posTrack.py_vertex = atof(row_track->GetField(24));
         posTrack.pz_vertex = atof(row_track->GetField(25));
         posTrack.triggerID = atoi(row_track->GetField(26));
+        posTrack.nHitsSt1  = atoi(row_track->GetField(27));
+        posTrack.nHitsSt2  = atoi(row_track->GetField(28));
+        posTrack.nHitsSt3  = atoi(row_track->GetField(29));
+        posTrack.nHitsSt4H = atoi(row_track->GetField(30));
+        posTrack.nHitsSt4V = atoi(row_track->GetField(31));
         posTrack.px0       = dimuon.px1;
         posTrack.py0       = dimuon.py1;
         posTrack.pz0       = dimuon.pz1;
@@ -313,6 +319,11 @@ int main(int argc, char* argv[])
         negTrack.py_vertex = atof(row_track->GetField(24));
         negTrack.pz_vertex = atof(row_track->GetField(25));
         negTrack.triggerID = atoi(row_track->GetField(26));
+        negTrack.nHitsSt1  = atoi(row_track->GetField(27));
+        negTrack.nHitsSt2  = atoi(row_track->GetField(28));
+        negTrack.nHitsSt3  = atoi(row_track->GetField(29));
+        negTrack.nHitsSt4H = atoi(row_track->GetField(30));
+        negTrack.nHitsSt4V = atoi(row_track->GetField(31));
         negTrack.px0       = dimuon.px2;
         negTrack.py0       = dimuon.py2;
         negTrack.pz0       = dimuon.pz2;

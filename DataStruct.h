@@ -94,19 +94,20 @@ public:
     int trackID;
     int triggerID;
     int charge;
-    int nHits;
+    int nHits, nHitsSt1, nHitsSt2, nHitsSt3;
+    int nHitsSt4H, nHitsSt4V;
     float chisq;
     float x_st1, y_st1, z_st1;
     float x_st3, y_st3, z_st3;
-    float x_vertex, y_vertex, z_vertex;
-    float x_target, y_target, z_target;
-    float x_dump,   y_dump,   z_dump;
-    float px_vertex, py_vertex, pz_vertex;
-    float px_st1, py_st1, pz_st1;
-    float px_st3, py_st3, pz_st3;
-    float px0, py0, pz0;
+    float x_vertex, y_vertex, z_vertex;         //vertex position as defined by DCA
+    float x_target, y_target, z_target;         //projection at z_target
+    float x_dump,   y_dump,   z_dump;           //projection at z_dump
+    float px_vertex, py_vertex, pz_vertex;      //momentum when constrained to (0, 0, z_vertex)
+    float px_st1, py_st1, pz_st1;               //momentum at z_st1 (650 cm)
+    float px_st3, py_st3, pz_st3;               //momentum at z_st3 (1900 cm)
+    float px0, py0, pz0;                        //momentum when constrained to dimuon z_vertex
 
-    ClassDef(Track, 3)
+    ClassDef(Track, 4)
 };
 
 #endif
