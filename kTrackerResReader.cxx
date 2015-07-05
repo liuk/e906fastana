@@ -103,6 +103,12 @@ int main(int argc, char* argv[])
         else if(dataEvent)
         {
             event.MATRIX1 = recEvent->isTriggeredBy(SRawEvent::MATRIX1) ? 1 : -1;
+
+            if(spillBank.find(recEvent->getSpillID()) == spillBank.end())
+            {
+                event.log("spill ID doesn't exist!");
+                continue;
+            }
             spill = spillBank[recEvent->getSpillID()];
         }
         else
