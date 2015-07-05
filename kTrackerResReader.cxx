@@ -1,4 +1,5 @@
 #include <iostream>
+#include <map>
 
 #include <TROOT.h>
 #include <TFile.h>
@@ -17,11 +18,11 @@ int main(int argc, char* argv[])
     // input data structure
     SRecEvent* recEvent = new SRecEvent;
 
-    TFile* dataFile = new TFile(argv[2], "READ");
-    TTree* dataTree = (TTree*)dataFile->Get(argv[1]);
+    TFile* dataFile = new TFile(argv[1], "READ");
+    TTree* dataTree = (TTree*)dataFile->Get(argv[3]);
 
     dataTree->SetBranchAddress("recEvent", &recEvent);
-    
+
     //check if raw event exists
     bool mcEvent = false;
     bool dataEvent = false;
@@ -46,11 +47,11 @@ int main(int argc, char* argv[])
     // output data structure
     Dimuon* p_dimuon = new Dimuon; Dimuon& dimuon = *p_dimuon;
     Spill* p_spill = new Spill; Spill& spill = *p_spill;
-    Event* p_event = new Event; Event& event = *p_event; 
+    Event* p_event = new Event; Event& event = *p_event;
     Track* p_posTrack = new Track; Track& posTrack = *p_posTrack;
     Track* p_negTrack = new Track; Track& negTrack = *p_negTrack;
 
-    TFile* saveFile = new TFile(argv[3], "recreate");
+    TFile* saveFile = new TFile(argv[2], "recreate");
     TTree* saveTree = new TTree("save", "save");
 
     saveTree->Branch("dimuon", &p_dimuon, 256000, 99);
@@ -59,7 +60,22 @@ int main(int argc, char* argv[])
     saveTree->Branch("posTrack", &p_posTrack, 256000, 99);
     saveTree->Branch("negTrack", &p_negTrack, 256000, 99);
 
+    //Initialize spill information accordingly
     spill.mcflag = mcEvent;
+    map<int, Spill> spillBank;
+    if(!mcEvent)
+    {
+        TFile* spillFile = new TFile(argv[4]);
+        TTree* spillTree = (TTree*)spillFile->Get("save");
+
+        spillTree->SetBranchAddress("spill", &p_spill);
+
+        for(int i = 0; i < spillTree->GetEntries(); ++i)
+        {
+            spillTree->GetEntry(i);
+            spillBank.insert(map<int, Spill>::value_type(spill.spillID, spill));
+        }
+    }
 
     int nDimuons = 0;
     double x_dummy, y_dummy, z_dummy;
@@ -75,23 +91,24 @@ int main(int argc, char* argv[])
         event.spillID = recEvent->getSpillID();
         event.eventID = recEvent->getEventID();
         event.intensity = dataEvent ? rawEvent->getIntensity() : 0;
-        if(mcEvent) 
+        if(mcEvent)
         {
             event.weight = rawMCEvent->weight;
             event.MATRIX1 = rawMCEvent->isEmuTriggered() ? 1 : -1;
+
+            spill.spillID = recEvent->getSpillID();
+            spill.targetPos = recEvent->getTargetPos();
+            spill.TARGPOS_CONTROL = recEvent->getTargetPos();
         }
         else if(dataEvent)
         {
             event.MATRIX1 = recEvent->isTriggeredBy(SRawEvent::MATRIX1) ? 1 : -1;
+            spill = spillBank[recEvent->getSpillID()];
         }
         else
         {
             event.MATRIX1 = 1;
         }
-
-        spill.spillID = recEvent->getSpillID();
-        spill.targetPos = recEvent->getTargetPos();
-        spill.TARGPOS_CONTROL = recEvent->getTargetPos();
 
         for(int j = 0; j < recEvent->getNDimuons(); ++j)
         {
@@ -108,7 +125,7 @@ int main(int argc, char* argv[])
             dimuon.x1 = recDimuon.x1;
             dimuon.x2 = recDimuon.x2;
             dimuon.pT = recDimuon.pT;
-        
+
             dimuon.px1 = recDimuon.p_pos.Px();
             dimuon.py1 = recDimuon.p_pos.Py();
             dimuon.pz1 = recDimuon.p_pos.Pz();
@@ -136,6 +153,9 @@ int main(int argc, char* argv[])
             posTrack.nHitsSt4H = recPosTrack.getNHitsInPTY();
             posTrack.nHitsSt4V = recPosTrack.getNHitsInPTX();
             posTrack.chisq = recPosTrack.getChisq();
+            posTrack.chisq_dump = recPosTrack.getChisqDump();
+            posTrack.chisq_target = recPosTrack.getChisqTarget();
+            posTrack.chisq_upstream = recPosTrack.getChisqUpstream();
             posTrack.px0 = recDimuon.p_pos.Px();
             posTrack.py0 = recDimuon.p_pos.Py();
             posTrack.pz0 = recDimuon.p_pos.Pz();
@@ -159,7 +179,7 @@ int main(int argc, char* argv[])
             recPosTrack.getExpMomentumFast(1900., x_dummy, y_dummy, z_dummy);
             posTrack.px_st3 = x_dummy;
             posTrack.py_st3 = y_dummy;
-            posTrack.pz_st3 = z_dummy;          
+            posTrack.pz_st3 = z_dummy;
             recPosTrack.getExpPositionFast(650., x_dummy, y_dummy);
             posTrack.x_st1 = x_dummy;
             posTrack.y_st1 = y_dummy;
@@ -180,6 +200,9 @@ int main(int argc, char* argv[])
             negTrack.nHitsSt4H = recNegTrack.getNHitsInPTY();
             negTrack.nHitsSt4V = recNegTrack.getNHitsInPTX();
             negTrack.chisq = recNegTrack.getChisq();
+            negTrack.chisq_dump = recNegTrack.getChisqDump();
+            negTrack.chisq_target = recNegTrack.getChisqTarget();
+            negTrack.chisq_upstream = recNegTrack.getChisqUpstream();
             negTrack.px0 = recDimuon.p_neg.Px();
             negTrack.py0 = recDimuon.p_neg.Py();
             negTrack.pz0 = recDimuon.p_neg.Pz();
@@ -203,7 +226,7 @@ int main(int argc, char* argv[])
             recNegTrack.getExpMomentumFast(1900., x_dummy, y_dummy, z_dummy);
             negTrack.px_st3 = x_dummy;
             negTrack.py_st3 = y_dummy;
-            negTrack.pz_st3 = z_dummy;          
+            negTrack.pz_st3 = z_dummy;
             recNegTrack.getExpPositionFast(650., x_dummy, y_dummy);
             negTrack.x_st1 = x_dummy;
             negTrack.y_st1 = y_dummy;
@@ -216,7 +239,7 @@ int main(int argc, char* argv[])
             saveTree->Fill();
         }
 
-        recEvent->clear();   
+        recEvent->clear();
     }
 
     saveFile->cd();

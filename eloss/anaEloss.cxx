@@ -20,7 +20,7 @@ int main(int argc, char* argv[])
     // define the output file structure
     Dimuon* p_dimuon = new Dimuon; Dimuon& dimuon = *p_dimuon;
     Spill* p_spill = new Spill; Spill& spill = *p_spill;
-    Event* p_event = new Event; Event& event = *p_event; 
+    Event* p_event = new Event; Event& event = *p_event;
     Track* p_posTrack = new Track; Track& posTrack = *p_posTrack;
     Track* p_negTrack = new Track; Track& negTrack = *p_negTrack;
 
@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
         dataTree->GetEntry(i);
 
         //temporary cuts
-        if(spill.spillID >= 416709 && spill.spillID <= 423255) continue;   //bad taget position
+        if(spill.spillID >= 416709 && spill.spillID <= 424180) continue;   //bad taget position
         if(spill.spillID >= 482574 && spill.spillID <= 484924) continue;   //flipped magnets
         //if(event.intensity > 10000.) continue;
 
@@ -98,7 +98,7 @@ int main(int argc, char* argv[])
             x1_avg[i][j] = x1_sum[i][j]/nevt[i][j];
             x2_avg[i][j] = x2_sum[i][j]/nevt[i][j];
             xf_avg[i][j] = xf_sum[i][j]/nevt[i][j];
-            mass_avg[i][j] = mass_sum[i][j]/nevt[i][j]; 
+            mass_avg[i][j] = mass_sum[i][j]/nevt[i][j];
         }
     }
 
@@ -132,7 +132,7 @@ int main(int argc, char* argv[])
             else
             {
                 yield_bkgsub[i][j] = yield_raw[i][j] - yield_raw[4][j];
-                err_yield_bkgsub[i][j] = sqrt(err_yield_raw[i][j]*err_yield_raw[i][j] + err_yield_raw[4][j]*err_yield_raw[4][j]);           
+                err_yield_bkgsub[i][j] = sqrt(err_yield_raw[i][j]*err_yield_raw[i][j] + err_yield_raw[4][j]*err_yield_raw[4][j]);
             }
         }
     }
@@ -207,7 +207,7 @@ int main(int argc, char* argv[])
             err_xsec_ratio_corr[i][j] = err_xsec_ratio[i][j];
         }
     }
-    
+
     //print everything
     for(int i = 1; i <= nTargets; ++i)
     {
@@ -215,7 +215,7 @@ int main(int argc, char* argv[])
         for(int j = 0; j < nx1bins; ++j)
         {
             cout << " --- x1 bin " << j << " : " << x1bin[j] << " --- " << x1bin[j+1] << " --- " << endl;
-            
+
             cout << "high mass " << nevt[i][j] << " events. x1_avg = " << x1_avg[i][j] << ", ";
             cout << "x2_avg = " << x2_avg[i][j] << ", ";
             cout << "xf_avg = " << xf_avg[i][j] << ", ";
@@ -228,8 +228,8 @@ int main(int argc, char* argv[])
             cout << "Cross section ratio over LD2 =             " << xsec_ratio[i][j] << " +/- " << err_xsec_ratio[i][j] << endl;
             cout << "Iso-scalar corrected cross section ratio = " << xsec_ratio_corr[i][j] << " +/- " << err_xsec_ratio_corr[i][j] << endl;
             //cout << "Base-line from dbar/ubar = " << ((A[i] - Z[i])*R_np[j] + Z[i])/(R_np[j] + 1.)/A[i]*A[3] << endl;
- 
-            cout << endl; 
+
+            cout << endl;
         }
     }
 
@@ -254,7 +254,7 @@ int main(int argc, char* argv[])
 
             y[i][j] = xsec_ratio_corr[i][j];
             dy[i][j] = err_xsec_ratio_corr[i][j];
-            
+
             y_raw[i][j] = xsec_ratio[i][j];
             dy_raw[i][j] = err_xsec_ratio[i][j];
         }
@@ -275,7 +275,7 @@ int main(int argc, char* argv[])
         gr_raw[i]->SetMarkerStyle(21);
         gr_raw[i]->GetXaxis()->SetLimits(x1min - 0.1, x1max + 0.1);
         gr_raw[i]->SetMaximum(2.);
-        gr_raw[i]->SetMinimum(0.);      
+        gr_raw[i]->SetMinimum(0.);
     }
 
     TCanvas* c1 = new TCanvas("c1", "c1", 1500, 500);

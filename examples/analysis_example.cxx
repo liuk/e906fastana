@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
     // define the output file structure
     Dimuon* p_dimuon = new Dimuon; Dimuon& dimuon = *p_dimuon;
     Spill* p_spill = new Spill; Spill& spill = *p_spill;
-    Event* p_event = new Event; Event& event = *p_event; 
+    Event* p_event = new Event; Event& event = *p_event;
     Track* p_posTrack = new Track; Track& posTrack = *p_posTrack;
     Track* p_negTrack = new Track; Track& negTrack = *p_negTrack;
 
@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
         dataTree->GetEntry(i);
 
         //temporary cuts
-        if(spill.spillID >= 416709 && spill.spillID <= 423255) continue;   //bad taget position
+        if(spill.spillID >= 416709 && spill.spillID <= 424180) continue;   //bad taget position
         if(spill.spillID >= 482574 && spill.spillID <= 484924) continue;   //flipped magnets
 
         //general cuts

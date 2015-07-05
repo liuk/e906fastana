@@ -15,6 +15,9 @@ def compile(filename):
     if os.path.exists('kTracker/libkTracker.so'):
         os.system('cp kTracker/libkTracker.so .')
         ldflags = ldflags + ' -L./ -lkTracker'
+    elif os.path.exists('kTracker/lib/libkTracker.so'):
+        os.system('cp kTracker/lib/libkTracker.so .')
+        ldflags = ldflags + ' -L./ -lkTracker'
 
     ## data version
     cflags = cflags + ' -D' + dataset

@@ -97,6 +97,7 @@ public:
     int nHits, nHitsSt1, nHitsSt2, nHitsSt3;
     int nHitsSt4H, nHitsSt4V;
     float chisq;
+    float chisq_dump, chisq_target, chisq_upstream;  // chi squared when force the track to cross z = 40, -130, -480 cm
     float x_st1, y_st1, z_st1;
     float x_st3, y_st3, z_st3;
     float x_vertex, y_vertex, z_vertex;         //vertex position as defined by DCA
