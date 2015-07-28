@@ -63,7 +63,7 @@ int main(int argc, char* argv[])
     //Initialize spill information accordingly
     spill.mcflag = mcEvent;
     map<int, Spill> spillBank;
-    if(!mcEvent)
+    if(!mcEvent && argc > 4)
     {
         TFile* spillFile = new TFile(argv[4]);
         TTree* spillTree = (TTree*)spillFile->Get("save");
@@ -91,29 +91,27 @@ int main(int argc, char* argv[])
         event.spillID = recEvent->getSpillID();
         event.eventID = recEvent->getEventID();
         event.intensity = dataEvent ? rawEvent->getIntensity() : 0;
+        spill.spillID = recEvent->getSpillID();
+        spill.targetPos = recEvent->getTargetPos();
+        spill.TARGPOS_CONTROL = recEvent->getTargetPos();
         if(mcEvent)
         {
             event.weight = rawMCEvent->weight;
             event.MATRIX1 = rawMCEvent->isEmuTriggered() ? 1 : -1;
-
-            spill.spillID = recEvent->getSpillID();
-            spill.targetPos = recEvent->getTargetPos();
-            spill.TARGPOS_CONTROL = recEvent->getTargetPos();
         }
         else if(dataEvent)
         {
             event.MATRIX1 = recEvent->isTriggeredBy(SRawEvent::MATRIX1) ? 1 : -1;
 
-            if(spillBank.find(recEvent->getSpillID()) == spillBank.end())
+            if(!spillBank.empty())
             {
-                event.log("spill ID doesn't exist!");
-                continue;
+                if(spillBank.find(recEvent->getSpillID()) == spillBank.end())
+                {
+                    event.log("spill ID doesn't exist!");
+                    continue;
+                }
+                spill = spillBank[recEvent->getSpillID()];
             }
-            spill = spillBank[recEvent->getSpillID()];
-        }
-        else
-        {
-            event.MATRIX1 = 1;
         }
 
         for(int j = 0; j < recEvent->getNDimuons(); ++j)
