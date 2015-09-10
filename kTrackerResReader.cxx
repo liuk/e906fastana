@@ -15,17 +15,20 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
+    //name of the TTree
+    TString treename = argv[3];
+
     // input data structure
     SRecEvent* recEvent = new SRecEvent;
 
     TFile* dataFile = new TFile(argv[1], "READ");
-    TTree* dataTree = (TTree*)dataFile->Get(argv[3]);
+    TTree* dataTree = (TTree*)dataFile->Get(treename.Data());
 
     dataTree->SetBranchAddress("recEvent", &recEvent);
 
     //check if raw event exists
-    bool mcEvent = false;
-    bool dataEvent = false;
+    bool mcdata = false;
+    bool mixdata = treename.Contains("mix") || treename.Contains("pp") || treename.Contains("mm");
     SRawEvent* rawEvent;
     SRawMCEvent* rawMCEvent;
     if(dataTree->FindBranch("rawEvent") != NULL)
@@ -34,13 +37,12 @@ int main(int argc, char* argv[])
         {
             rawMCEvent = new SRawMCEvent;
             dataTree->SetBranchAddress("rawEvent", &rawMCEvent);
-            mcEvent = true;
+            mcdata = true;
         }
         else
         {
             rawEvent = new SRawEvent;
             dataTree->SetBranchAddress("rawEvent", &rawEvent);
-            dataEvent = true;
         }
     }
 
@@ -61,9 +63,9 @@ int main(int argc, char* argv[])
     saveTree->Branch("negTrack", &p_negTrack, 256000, 99);
 
     //Initialize spill information accordingly
-    spill.mcflag = mcEvent;
+    spill.skipflag = mcdata || mixdata;
     map<int, Spill> spillBank;
-    if(!mcEvent && argc > 4)
+    if(!spill.skipflag && argc > 4)
     {
         TFile* spillFile = new TFile(argv[4]);
         TTree* spillTree = (TTree*)spillFile->Get("save");
@@ -77,8 +79,10 @@ int main(int argc, char* argv[])
         }
     }
 
+    //start reading data
     int nDimuons = 0;
     double x_dummy, y_dummy, z_dummy;
+    bool badSpillFlag = false;
     for(int i = 0; i < dataTree->GetEntries(); ++i)
     {
         dataTree->GetEntry(i);
@@ -87,32 +91,54 @@ int main(int argc, char* argv[])
             cout << "Converting " << i << "/" << dataTree->GetEntries() << endl;
         }
 
+        //general event level info
         event.runID = recEvent->getRunID();
         event.spillID = recEvent->getSpillID();
         event.eventID = recEvent->getEventID();
-        event.intensity = dataEvent ? rawEvent->getIntensity() : 0;
-        spill.spillID = recEvent->getSpillID();
-        spill.targetPos = recEvent->getTargetPos();
-        spill.TARGPOS_CONTROL = recEvent->getTargetPos();
-        if(mcEvent)
+        event.status = recEvent->getRecStatus();
+        if(mcdata)
         {
-            event.weight = rawMCEvent->weight;
             event.MATRIX1 = rawMCEvent->isEmuTriggered() ? 1 : -1;
+            event.weight = rawMCEvent->weight;
+            event.intensity = 1.;
         }
-        else if(dataEvent)
+        else if(mixdata)
+        {
+            event.MATRIX1 = 1.;
+            event.weight = 1.;
+            event.intensity = 1.;
+        }
+        else
         {
             event.MATRIX1 = recEvent->isTriggeredBy(SRawEvent::MATRIX1) ? 1 : -1;
+            event.weight = 1.;
+            event.intensity = rawEvent->getIntensity();
+        }
 
+        //spill level information
+        if(!spill.skipflag && event.spillID != spill.spillID)
+        {
+            badSpillFlag = false;
             if(!spillBank.empty())
             {
                 if(spillBank.find(recEvent->getSpillID()) == spillBank.end())
                 {
-                    event.log("spill ID doesn't exist!");
-                    continue;
+                    event.log("spillID does not exist!");
+                    badSpillFlag = true;
                 }
-                spill = spillBank[recEvent->getSpillID()];
+                else
+                {
+                    spill = spillBank[recEvent->getSpillID()];
+                }
             }
         }
+        else
+        {
+            spill.spillID = recEvent->getSpillID();
+            spill.targetPos = recEvent->getTargetPos();
+            spill.TARGPOS_CONTROL = recEvent->getTargetPos();
+        }
+        if(badSpillFlag) continue;
 
         for(int j = 0; j < recEvent->getNDimuons(); ++j)
         {
@@ -122,123 +148,137 @@ int main(int argc, char* argv[])
             dimuon.dimuonID = nDimuons;
             dimuon.posTrackID = recDimuon.trackID_pos;
             dimuon.negTrackID = recDimuon.trackID_neg;
-            dimuon.chisq_dimuon = recDimuon.chisq_kf;
-            dimuon.trackSeparation = recDimuon.vtx_pos.Z() - recDimuon.vtx_neg.Z();
-            dimuon.mass = recDimuon.mass;
-            dimuon.xF = recDimuon.xF;
-            dimuon.x1 = recDimuon.x1;
-            dimuon.x2 = recDimuon.x2;
-            dimuon.pT = recDimuon.pT;
-
             dimuon.px1 = recDimuon.p_pos.Px();
             dimuon.py1 = recDimuon.p_pos.Py();
             dimuon.pz1 = recDimuon.p_pos.Pz();
             dimuon.px2 = recDimuon.p_neg.Px();
             dimuon.py2 = recDimuon.p_neg.Py();
             dimuon.pz2 = recDimuon.p_neg.Pz();
-
-            dimuon.dx = recDimuon.vtx.X();
-            dimuon.dy = recDimuon.vtx.Y();
-            dimuon.dz = recDimuon.vtx.Z();
+            dimuon.dx  = recDimuon.vtx.X();
+            dimuon.dy  = recDimuon.vtx.Y();
+            dimuon.dz  = recDimuon.vtx.Z();
             dimuon.dpx = dimuon.px1 + dimuon.px2;
             dimuon.dpy = dimuon.py1 + dimuon.py2;
             dimuon.dpz = dimuon.pz1 + dimuon.pz2;
+            dimuon.mass  = recDimuon.mass;
+            dimuon.xF    = recDimuon.xF;
+            dimuon.x1    = recDimuon.x1;
+            dimuon.x2    = recDimuon.x2;
+            dimuon.pT    = recDimuon.pT;
+            dimuon.costh = recDimuon.costh;
+            dimuon.phi   = recDimuon.phi;
+            dimuon.chisq_dimuon    = recDimuon.chisq_kf;
+            dimuon.trackSeparation = recDimuon.vtx_pos.Z() - recDimuon.vtx_neg.Z();
 
-            if(!dimuon.goodDimuon()) continue;
+            //if(!dimuon.goodDimuon()) continue;
+            if(dimuon.mass < 0.5 || dimuon.mass > 10. || dimuon.chisq_dimuon > 25. || dimuon.x1 < 0. || dimuon.x1 > 1.
+               || dimuon.x2 < 0. || dimuon.x2 > 1. || dimuon.xF < -1. || dimuon.xF > 1. || fabs(dimuon.dx) > 2.
+               || fabs(dimuon.dy) > 2. || dimuon.dz < -300. || dimuon.dz > 300. || fabs(dimuon.dpx) > 3.
+               || fabs(dimuon.dpy) > 3. || dimuon.dpz < 30. || dimuon.dpz > 120. || fabs(dimuon.trackSeparation) > 300.) continue;
 
             SRecTrack recPosTrack = recEvent->getTrack(dimuon.posTrackID);
-            posTrack.trackID = recDimuon.trackID_pos;
-            posTrack.triggerID = recPosTrack.getTriggerRoad();
-            posTrack.charge = 1;
-            posTrack.nHits = recPosTrack.getNHits();
-            posTrack.nHitsSt1 = recPosTrack.getNHitsInStation(1);
-            posTrack.nHitsSt2 = recPosTrack.getNHitsInStation(2);
-            posTrack.nHitsSt3 = recPosTrack.getNHitsInStation(3);
+            posTrack.trackID   = recDimuon.trackID_pos;
+            posTrack.charge    = 1;
+            posTrack.nHits     = recPosTrack.getNHits();
+            posTrack.nHitsSt1  = recPosTrack.getNHitsInStation(1);
+            posTrack.nHitsSt2  = recPosTrack.getNHitsInStation(2);
+            posTrack.nHitsSt3  = recPosTrack.getNHitsInStation(3);
             posTrack.nHitsSt4H = recPosTrack.getNHitsInPTY();
             posTrack.nHitsSt4V = recPosTrack.getNHitsInPTX();
-            posTrack.chisq = recPosTrack.getChisq();
-            posTrack.chisq_dump = recPosTrack.getChisqDump();
+            posTrack.chisq        = recPosTrack.getChisq();
+            posTrack.chisq_dump   = recPosTrack.getChisqDump();
             posTrack.chisq_target = recPosTrack.getChisqTarget();
             posTrack.chisq_upstream = recPosTrack.getChisqUpstream();
+            recPosTrack.getExpPositionFast(600., x_dummy, y_dummy);
+            posTrack.x1 = x_dummy;
+            posTrack.y1 = y_dummy;
+            posTrack.z1 = 600.;
+            recPosTrack.getExpPositionFast(1910., x_dummy, y_dummy);
+            posTrack.x3 = x_dummy;
+            posTrack.y3 = y_dummy;
+            posTrack.z3 = 1910.;
+            posTrack.x0 = recPosTrack.getVtxPar(0);
+            posTrack.y0 = recPosTrack.getVtxPar(1);
+            posTrack.z0 = recPosTrack.getVtxPar(2);
+            posTrack.xT = recPosTrack.getTargetPos().X();
+            posTrack.yT = recPosTrack.getTargetPos().Y();
+            posTrack.zT = recPosTrack.getTargetPos().Z();
+            posTrack.xD = recPosTrack.getDumpPos().X();
+            posTrack.yD = recPosTrack.getDumpPos().Y();
+            posTrack.zD = recPosTrack.getDumpPos().Z();
+            recPosTrack.getExpMomentumFast(600., x_dummy, y_dummy, z_dummy);
+            posTrack.px1 = x_dummy;
+            posTrack.py1 = y_dummy;
+            posTrack.pz1 = z_dummy;
+            recPosTrack.getExpMomentumFast(1910., x_dummy, y_dummy, z_dummy);
+            posTrack.px3 = x_dummy;
+            posTrack.py3 = y_dummy;
+            posTrack.pz3 = z_dummy;
+            posTrack.pxT = recPosTrack.getTargetMom().X();
+            posTrack.pyT = recPosTrack.getTargetMom().Y();
+            posTrack.pzT = recPosTrack.getTargetMom().Z();
+            posTrack.pxD = recPosTrack.getDumpMom().X();
+            posTrack.pyD = recPosTrack.getDumpMom().Y();
+            posTrack.pzD = recPosTrack.getDumpMom().Z();
+            posTrack.roadID = recPosTrack.getTriggerRoad();
+            posTrack.tx_PT  = recPosTrack.getPTSlopeX();
+            posTrack.ty_PT  = recPosTrack.getPTSlopeY();
+            posTrack.thbend = atan(posTrack.px3/posTrack.pz3) - atan(posTrack.px1/posTrack.pz1);
             posTrack.px0 = recDimuon.p_pos.Px();
             posTrack.py0 = recDimuon.p_pos.Py();
             posTrack.pz0 = recDimuon.p_pos.Pz();
-            posTrack.x_vertex = recPosTrack.getVtxPar(0);
-            posTrack.y_vertex = recPosTrack.getVtxPar(1);
-            posTrack.z_vertex = recPosTrack.getVtxPar(2);
-            posTrack.x_target = recPosTrack.getTargetPos().X();
-            posTrack.y_target = recPosTrack.getTargetPos().Y();
-            posTrack.z_target = recPosTrack.getTargetPos().Z();
-            posTrack.x_dump = recPosTrack.getDumpPos().X();
-            posTrack.y_dump = recPosTrack.getDumpPos().Y();
-            posTrack.z_dump = recPosTrack.getDumpPos().Z();
-            recPosTrack.getMomentumVertex(x_dummy, y_dummy, z_dummy);
-            posTrack.px_vertex = x_dummy;
-            posTrack.py_vertex = y_dummy;
-            posTrack.pz_vertex = z_dummy;
-            recPosTrack.getExpMomentumFast(650., x_dummy, y_dummy, z_dummy);
-            posTrack.px_st1 = x_dummy;
-            posTrack.py_st1 = y_dummy;
-            posTrack.pz_st1 = z_dummy;
-            recPosTrack.getExpMomentumFast(1900., x_dummy, y_dummy, z_dummy);
-            posTrack.px_st3 = x_dummy;
-            posTrack.py_st3 = y_dummy;
-            posTrack.pz_st3 = z_dummy;
-            recPosTrack.getExpPositionFast(650., x_dummy, y_dummy);
-            posTrack.x_st1 = x_dummy;
-            posTrack.y_st1 = y_dummy;
-            posTrack.z_st1 = 650.;
-            recPosTrack.getExpPositionFast(1900., x_dummy, y_dummy);
-            posTrack.x_st3 = x_dummy;
-            posTrack.y_st3 = y_dummy;
-            posTrack.z_st1 = 1900.;
 
             SRecTrack recNegTrack = recEvent->getTrack(dimuon.negTrackID);
-            negTrack.trackID = recDimuon.trackID_neg;
-            negTrack.triggerID = recNegTrack.getTriggerRoad();
-            negTrack.charge = -1;
-            negTrack.nHits = recNegTrack.getNHits();
-            negTrack.nHitsSt1 = recNegTrack.getNHitsInStation(1);
-            negTrack.nHitsSt2 = recNegTrack.getNHitsInStation(2);
-            negTrack.nHitsSt3 = recNegTrack.getNHitsInStation(3);
+            negTrack.trackID   = recDimuon.trackID_neg;
+            negTrack.charge    = 1;
+            negTrack.nHits     = recNegTrack.getNHits();
+            negTrack.nHitsSt1  = recNegTrack.getNHitsInStation(1);
+            negTrack.nHitsSt2  = recNegTrack.getNHitsInStation(2);
+            negTrack.nHitsSt3  = recNegTrack.getNHitsInStation(3);
             negTrack.nHitsSt4H = recNegTrack.getNHitsInPTY();
             negTrack.nHitsSt4V = recNegTrack.getNHitsInPTX();
-            negTrack.chisq = recNegTrack.getChisq();
-            negTrack.chisq_dump = recNegTrack.getChisqDump();
+            negTrack.chisq        = recNegTrack.getChisq();
+            negTrack.chisq_dump   = recNegTrack.getChisqDump();
             negTrack.chisq_target = recNegTrack.getChisqTarget();
             negTrack.chisq_upstream = recNegTrack.getChisqUpstream();
+            recNegTrack.getExpPositionFast(600., x_dummy, y_dummy);
+            negTrack.x1 = x_dummy;
+            negTrack.y1 = y_dummy;
+            negTrack.z1 = 600.;
+            recNegTrack.getExpPositionFast(1910., x_dummy, y_dummy);
+            negTrack.x3 = x_dummy;
+            negTrack.y3 = y_dummy;
+            negTrack.z3 = 1910.;
+            negTrack.x0 = recNegTrack.getVtxPar(0);
+            negTrack.y0 = recNegTrack.getVtxPar(1);
+            negTrack.z0 = recNegTrack.getVtxPar(2);
+            negTrack.xT = recNegTrack.getTargetPos().X();
+            negTrack.yT = recNegTrack.getTargetPos().Y();
+            negTrack.zT = recNegTrack.getTargetPos().Z();
+            negTrack.xD = recNegTrack.getDumpPos().X();
+            negTrack.yD = recNegTrack.getDumpPos().Y();
+            negTrack.zD = recNegTrack.getDumpPos().Z();
+            recNegTrack.getExpMomentumFast(600., x_dummy, y_dummy, z_dummy);
+            negTrack.px1 = x_dummy;
+            negTrack.py1 = y_dummy;
+            negTrack.pz1 = z_dummy;
+            recNegTrack.getExpMomentumFast(1910., x_dummy, y_dummy, z_dummy);
+            negTrack.px3 = x_dummy;
+            negTrack.py3 = y_dummy;
+            negTrack.pz3 = z_dummy;
+            negTrack.pxT = recNegTrack.getTargetMom().X();
+            negTrack.pyT = recNegTrack.getTargetMom().Y();
+            negTrack.pzT = recNegTrack.getTargetMom().Z();
+            negTrack.pxD = recNegTrack.getDumpMom().X();
+            negTrack.pyD = recNegTrack.getDumpMom().Y();
+            negTrack.pzD = recNegTrack.getDumpMom().Z();
+            negTrack.roadID = recNegTrack.getTriggerRoad();
+            negTrack.tx_PT  = recNegTrack.getPTSlopeX();
+            negTrack.ty_PT  = recNegTrack.getPTSlopeY();
+            negTrack.thbend = atan(negTrack.px3/negTrack.pz3) - atan(negTrack.px1/negTrack.pz1);
             negTrack.px0 = recDimuon.p_neg.Px();
             negTrack.py0 = recDimuon.p_neg.Py();
             negTrack.pz0 = recDimuon.p_neg.Pz();
-            negTrack.x_vertex = recNegTrack.getVtxPar(0);
-            negTrack.y_vertex = recNegTrack.getVtxPar(1);
-            negTrack.z_vertex = recNegTrack.getVtxPar(2);
-            negTrack.x_target = recNegTrack.getTargetPos().X();
-            negTrack.y_target = recNegTrack.getTargetPos().Y();
-            negTrack.z_target = recNegTrack.getTargetPos().Z();
-            negTrack.x_dump = recNegTrack.getDumpPos().X();
-            negTrack.y_dump = recNegTrack.getDumpPos().Y();
-            negTrack.z_dump = recNegTrack.getDumpPos().Z();
-            recNegTrack.getMomentumVertex(x_dummy, y_dummy, z_dummy);
-            negTrack.px_vertex = x_dummy;
-            negTrack.py_vertex = y_dummy;
-            negTrack.pz_vertex = z_dummy;
-            recNegTrack.getExpMomentumFast(650., x_dummy, y_dummy, z_dummy);
-            negTrack.px_st1 = x_dummy;
-            negTrack.py_st1 = y_dummy;
-            negTrack.pz_st1 = z_dummy;
-            recNegTrack.getExpMomentumFast(1900., x_dummy, y_dummy, z_dummy);
-            negTrack.px_st3 = x_dummy;
-            negTrack.py_st3 = y_dummy;
-            negTrack.pz_st3 = z_dummy;
-            recNegTrack.getExpPositionFast(650., x_dummy, y_dummy);
-            negTrack.x_st1 = x_dummy;
-            negTrack.y_st1 = y_dummy;
-            negTrack.z_st1 = 650.;
-            recNegTrack.getExpPositionFast(1900., x_dummy, y_dummy);
-            negTrack.x_st3 = x_dummy;
-            negTrack.y_st3 = y_dummy;
-            negTrack.z_st3 = 1900.;
 
             saveTree->Fill();
         }

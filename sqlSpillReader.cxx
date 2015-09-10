@@ -17,6 +17,7 @@ int main(int argc, char* argv[])
 {
     // define the output file structure
     Spill* p_spill = new Spill; Spill& spill = *p_spill;
+    spill.skipflag = false;
 
     TFile* saveFile = new TFile(argv[2], "recreate");
     TTree* saveTree = new TTree("save", "save");
@@ -24,16 +25,16 @@ int main(int argc, char* argv[])
     saveTree->Branch("spill", &p_spill, 256000, 99);
 
     //Connect to server
-    TSQLServer* server = TSQLServer::Connect(Form("mysql://%s", argv[3]), "", "");
+    TSQLServer* server = TSQLServer::Connect(Form("mysql://%s:%d", argv[3], atoi(argv[4])), "seaguest", "qqbar2mu+mu-");
     server->Exec(Form("USE %s", argv[1]));
     cout << "Reading schema " << argv[1] << " and save to " << argv[2] << endl;
 
     char query[2000];
-    sprintf(query, "SELECT spillID FROM Spill WHERE runID in (SELECT run FROM production WHERE ktracked=1) ORDER BY spillID");
+    sprintf(query, "SELECT spillID FROM Spill WHERE runID in (SELECT run FROM summary.production WHERE ktracked=1) ORDER BY spillID");
 
     TSQLResult* res = server->Query(query);
     int nSpillsRow = res->GetRowCount();
-    
+
     int nGoodSpill = 0;
     int nBadSpill_record = 0;
     int nBadSpill_quality = 0;
@@ -50,8 +51,8 @@ int main(int argc, char* argv[])
         delete row;
 
         //target position
-        sprintf(query, "SELECT a.targetPos,b.value FROM Spill AS a,Target AS b WHERE a.spillID"
-            "=%d AND b.spillID=%d AND b.name='TARGPOS_CONTROL'", spill.spillID, spill.spillID);
+        sprintf(query, "SELECT a.targetPos,b.value,a.dataQuality,a.liveProton FROM Spill AS a,Target AS b WHERE a.spillID"
+            "=%d AND b.spillID=%d AND b.name='TARGPOS_CONTROL' AND a.liveProton IS NOT NULL", spill.spillID, spill.spillID);
         TSQLResult* res_spill = server->Query(query);
         if(res_spill->GetRowCount() != 1)
         {
@@ -65,10 +66,12 @@ int main(int argc, char* argv[])
         TSQLRow* row_spill = res_spill->Next();
         spill.targetPos       = atoi(row_spill->GetField(0));
         spill.TARGPOS_CONTROL = atoi(row_spill->GetField(1));
+        spill.quality         = atoi(row_spill->GetField(2));
+        spill.liveProton      = atof(row_spill->GetField(3));
         delete row_spill;
         delete res_spill;
 
-        //Beam/BeamDAQ 
+        //Beam/BeamDAQ
         sprintf(query, "SELECT a.value,b.NM3ION,b.QIESum,b.inhibit_block_sum,b.trigger_sum_no_inhibit,"
             "b.dutyFactor53MHz FROM Beam AS a,BeamDAQ AS b WHERE a.spillID=%d AND b.spillID=%d AND "
             "a.name='S:G2SEM'", spill.spillID, spill.spillID);

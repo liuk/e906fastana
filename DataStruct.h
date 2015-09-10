@@ -18,12 +18,13 @@ public:
     int runID;
     int spillID;
     int eventID;
-
+    int status;
+    
     int MATRIX1;
     float weight;
     float intensity;
 
-    ClassDef(Event, 2)
+    ClassDef(Event, 3)
 };
 
 class Dimuon : public TObject
@@ -40,9 +41,9 @@ public:
     float trackSeparation;
     float dx, dy, dz, dpx, dpy, dpz;
     float px1, py1, pz1, px2, py2, pz2;
-    float mass, xF, x1, x2, pT;
+    float mass, xF, x1, x2, pT, costh, phi;
 
-    ClassDef(Dimuon, 1)
+    ClassDef(Dimuon, 2)
 };
 
 class Spill : public TObject
@@ -72,15 +73,17 @@ public:
     float busySum;
     float dutyFactor;
     float liveG2SEM;
+    float liveProton;
     float QIEUnit;
 
     int spillID;
+    int quality;
     int targetPos;
     int TARGPOS_CONTROL;
 
-    bool mcflag;
+    bool skipflag;     // will be true for MC data or random-mixing data
 
-    ClassDef(Spill, 2)
+    ClassDef(Spill, 3)
 };
 
 class Track : public TObject
@@ -92,23 +95,27 @@ public:
 
 public:
     int trackID;
-    int triggerID;
+    int roadID;
     int charge;
     int nHits, nHitsSt1, nHitsSt2, nHitsSt3;
     int nHitsSt4H, nHitsSt4V;
     float chisq;
     float chisq_dump, chisq_target, chisq_upstream;  // chi squared when force the track to cross z = 40, -130, -480 cm
-    float x_st1, y_st1, z_st1;
-    float x_st3, y_st3, z_st3;
-    float x_vertex, y_vertex, z_vertex;         //vertex position as defined by DCA
-    float x_target, y_target, z_target;         //projection at z_target
-    float x_dump,   y_dump,   z_dump;           //projection at z_dump
-    float px_vertex, py_vertex, pz_vertex;      //momentum when constrained to (0, 0, z_vertex)
-    float px_st1, py_st1, pz_st1;               //momentum at z_st1 (650 cm)
-    float px_st3, py_st3, pz_st3;               //momentum at z_st3 (1900 cm)
-    float px0, py0, pz0;                        //momentum when constrained to dimuon z_vertex
+    float x1, y1, z1;
+    float x3, y3, z3;
+    float x0, y0, z0;         //vertex position as defined by DCA
+    float xT, yT, zT;         //projection at z_target
+    float xD, yD, zD;         //projection at z_dump
+    float px0, py0, pz0;      //momentum when constrained to (0, 0, z_vertex)
+    float px1, py1, pz1;      //momentum at z_st1 (650 cm)
+    float px3, py3, pz3;      //momentum at z_st3 (1900 cm)
+    float pxT, pyT, pzT;      //momentum when constrained to z_target
+    float pxD, pyD, pzD;      //momentum when constrained to z_dump
+    float pxv, pyv, pzv;         //momentum when constrained to dimuon vertex
+    float tx_PT, ty_PT;       //slope of track segments at prop. tubes
+    float thbend;             //bend angle in KMAG
 
-    ClassDef(Track, 4)
+    ClassDef(Track, 5)
 };
 
 #endif

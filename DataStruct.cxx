@@ -13,7 +13,7 @@ ClassImp(Track)
 #define SPILLID_MIN_62 409563
 #define SPILLID_MAX_62 484924
 
-Event::Event() : runID(-1), spillID(-1), eventID(-1), MATRIX1(-1), weight(1.), intensity(0.)
+Event::Event() : runID(-1), spillID(-1), eventID(-1), status(-1), MATRIX1(-1), weight(0.), intensity(0.)
 {}
 
 bool Event::goodEvent()
@@ -49,12 +49,12 @@ bool Dimuon::dumpDimuon()
     return true;
 }
 
-Spill::Spill() : spillID(-1), targetPos(-1), TARGPOS_CONTROL(-1), mcflag(false)
+Spill::Spill() : spillID(-1), quality(-1), targetPos(-1), TARGPOS_CONTROL(-1), skipflag(false)
 {}
 
 bool Spill::goodSpill()
 {
-    return mcflag || (goodTargetPos() && goodTSGo() && goodScaler() && goodBeam() && goodBeamDAQ());
+    return skipflag || (goodTargetPos() && goodTSGo() && goodScaler() && goodBeam() && goodBeamDAQ());
 }
 
 bool Spill::goodTargetPos()
@@ -182,28 +182,23 @@ bool Track::goodTrack()
 {
     if(nHits <= 14) return false;
     if(chisq/(nHits - 5) > 6.) return false;
-    if(nHits < 18 && pz_st1 < 18.) return false;
+    if(nHits < 18 && pz1 < 18.) return false;
 
     return true;
 }
 
 bool Track::targetTrack()
 {
-    if(z_vertex <= -300. || z_vertex >= 0.) return false;
-    if(sqrt(x_dump*x_dump + y_dump*y_dump) - sqrt(x_target*x_target + y_target*y_target) < 
-        9.4431 - 0.356141*pz_vertex + 0.00566071*pz_vertex*pz_vertex - 3.05556E-5*pz_vertex*pz_vertex*pz_vertex) return false;
-    //if(sqrt(x_dump*x_dump + y_dump*y_dump) - sqrt(x_target*x_target + y_target*y_target) < 
-    //  9.4431 - 0.356141*pz0 + 0.00566071*pz0*pz0 - 3.05556E-5*pz0*pz0*pz0) return false;
+    if(z0 <= -300. || z0 >= 0.) return false;
+    if(sqrt(xD*xD + yD*yD) - sqrt(xT*xT + yT*yT) < 9.4431 - 0.356141*pzv + 0.00566071*pzv*pzv - 3.05556E-5*pzv*pzv*pzv) return false;
 
     return true;
 }
 
 bool Track::dumpTrack()
 {
-    if(z_vertex <= 0. && z_vertex >= 150.) return false;
-    if(sqrt(x_target*x_target + y_target*y_target) - sqrt(x_dump*x_dump + y_dump*y_dump) <
-        9.4431 - 0.356141*pz_vertex + 0.00566071*pz_vertex*pz_vertex - 3.05556E-5*pz_vertex*pz_vertex*pz_vertex) return false;
+    if(z0 <= 0. && z0 >= 150.) return false;
+    if(sqrt(xT*xT + yT*yT) - sqrt(xD*xD + yD*yD) < 9.4431 - 0.356141*pzv + 0.00566071*pzv*pzv - 3.05556E-5*pzv*pzv*pzv) return false;
 
     return true;
 }
-
