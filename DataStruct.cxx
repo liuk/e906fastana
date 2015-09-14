@@ -177,6 +177,9 @@ bool Spill::goodBeamDAQ()
 
 int Spill::triggerSet()
 {
+    if(spillID >= 371870 && spillID <= 376533) return -1;
+    if(spillID >= 378366 && spillID <= 379333) return -1;
+    if(spillID >= 416709 && spillID <= 424180) return -1;
     if(spillID >= SPILLID_MIN_57 && spillID <= SPILLID_MAX_57) return 57;
     if(spillID >= SPILLID_MIN_59 && spillID <= SPILLID_MAX_59) return 59;
     if(spillID >= SPILLID_MIN_61 && spillID <= SPILLID_MAX_61) return 61;
