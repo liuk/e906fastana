@@ -30,7 +30,8 @@ int main(int argc, char* argv[])
     cout << "Reading schema " << argv[1] << " and save to " << argv[2] << endl;
 
     char query[2000];
-    sprintf(query, "SELECT spillID FROM Spill WHERE runID in (SELECT run FROM summary.production WHERE ktracked=1) ORDER BY spillID");
+    //sprintf(query, "SELECT spillID FROM Spill WHERE runID in (SELECT run FROM summary.production WHERE ktracked=1) ORDER BY spillID");
+    sprintf(query, "SELECT spillID FROM Spill ORDER BY spillID");
 
     TSQLResult* res = server->Query(query);
     int nSpillsRow = res->GetRowCount();

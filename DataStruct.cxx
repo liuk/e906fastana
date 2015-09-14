@@ -6,12 +6,18 @@ ClassImp(Dimuon)
 ClassImp(Spill)
 ClassImp(Track)
 
-#define SPILLID_MIN_57 303278
-#define SPILLID_MAX_57 369968
-#define SPILLID_MIN_59 370239
-#define SPILLID_MAX_59 388470
-#define SPILLID_MIN_62 409563
-#define SPILLID_MAX_62 484924
+#define SPILLID_MIN_57 303215
+#define SPILLID_MAX_57 370100
+#define SPILLID_MIN_59 370110
+#define SPILLID_MAX_59 388580
+#define SPILLID_MIN_61 391072
+#define SPILLID_MAX_61 391100
+#define SPILLID_MIN_62 394308
+#define SPILLID_MAX_62 482573
+#define SPILLID_MIN_67 484946
+#define SPILLID_MAX_67 676224
+#define SPILLID_MIN_70 676498
+#define SPILLID_MAX_70 696455
 
 Event::Event() : runID(-1), spillID(-1), eventID(-1), status(-1), MATRIX1(-1), weight(0.), intensity(0.)
 {}
@@ -68,11 +74,15 @@ bool Spill::goodTargetPos()
 bool Spill::goodTSGo()
 {
     int trigSet = triggerSet();
-    if(trigSet == 57 || trigSet == 59)
+    if(trigSet < 0)
+    {
+        return false;
+    }
+    else if(trigSet <= 61)
     {
         if(TSGo < 1E3 || TSGo > 8E3) return false;
     }
-    else if(trigSet == 62)
+    else if(trigSet <= 70)
     {
         if(TSGo < 1E2 || TSGo > 6E3) return false;
     }
@@ -87,13 +97,17 @@ bool Spill::goodTSGo()
 bool Spill::goodScaler()
 {
     int trigSet = triggerSet();
-    if(trigSet == 57 || trigSet == 59)
+    if(trigSet < 0)
+    {
+        return false;
+    }
+    else if(trigSet <= 61)
     {
         if(acceptedMatrix1 < 1E3 || acceptedMatrix1 > 8E3) return false;
         if(afterInhMatrix1 < 1E3 || afterInhMatrix1 > 3E4) return false;
         if(acceptedMatrix1/afterInhMatrix1 < 0.2 || acceptedMatrix1/afterInhMatrix1 > 0.9) return false;
     }
-    else if(trigSet == 62)
+    else if(trigSet <= 70)
     {
         if(acceptedMatrix1 < 1E2 || acceptedMatrix1 > 6E3) return false;
         if(afterInhMatrix1 < 1E2 || afterInhMatrix1 > 1E4) return false;
@@ -110,13 +124,17 @@ bool Spill::goodScaler()
 bool Spill::goodBeam()
 {
     int trigSet = triggerSet();
-    if(trigSet == 57 || trigSet == 59)
+    if(trigSet < 0)
+    {
+        return false;
+    }
+    else if(trigSet <= 61)
     {
         //if(NM3ION < 2E12 || NM3ION > 1E13) return false;
         if(G2SEM < 2E12 || G2SEM > 1E13) return false;
         if(dutyFactor < 15. || dutyFactor > 60.) return false;
     }
-    else if(trigSet == 62)
+    else if(trigSet <= 70)
     {
         //if(NM3ION < 2E12 || NM3ION > 1E13) return false;
         if(G2SEM < 2E12 || G2SEM > 1E13) return false;
@@ -133,13 +151,17 @@ bool Spill::goodBeam()
 bool Spill::goodBeamDAQ()
 {
     int trigSet = triggerSet();
-    if(trigSet == 57 || trigSet == 59)
+    if(trigSet < 0)
+    {
+        return false;
+    }
+    else if(trigSet <= 61)
     {
         if(QIESum < 4E10 || QIESum > 1E12) return false;
         if(inhibitSum < 4E9 || inhibitSum > 1E11) return false;
         if(busySum < 4E9 || busySum > 1E11) return false;
     }
-    else if(trigSet == 62)
+    else if(trigSet <= 70)
     {
         if(QIESum < 4E10 || QIESum > 1E12) return false;
         if(inhibitSum < 4E9 || inhibitSum > 2E11) return false;
@@ -157,7 +179,10 @@ int Spill::triggerSet()
 {
     if(spillID >= SPILLID_MIN_57 && spillID <= SPILLID_MAX_57) return 57;
     if(spillID >= SPILLID_MIN_59 && spillID <= SPILLID_MAX_59) return 59;
+    if(spillID >= SPILLID_MIN_61 && spillID <= SPILLID_MAX_61) return 61;
     if(spillID >= SPILLID_MIN_62 && spillID <= SPILLID_MAX_62) return 62;
+    if(spillID >= SPILLID_MIN_67 && spillID <= SPILLID_MAX_67) return 67;
+    if(spillID >= SPILLID_MIN_70 && spillID <= SPILLID_MAX_70) return 70;
     return -1;
 }
 
