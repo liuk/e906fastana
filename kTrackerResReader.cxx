@@ -104,7 +104,7 @@ int main(int argc, char* argv[])
         }
         else if(mixdata)
         {
-            event.MATRIX1 = 1.;
+            event.MATRIX1 = 1;
             event.weight = 1.;
             event.intensity = 1.;
         }

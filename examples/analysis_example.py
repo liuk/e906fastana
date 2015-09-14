@@ -12,10 +12,6 @@ saveTree = saveFile.Get('save')
 # loop over all entries and apply basic analysis cuts
 for entry in saveTree:
 
-	# temporary cuts
-	if entry.spill.spillID >= 416709 and entry.spill.spillID <= 424180: continue    
-	if entry.spill.spillID >= 482574 and entry.spill.spillID <= 484924: continue
-
     # general cuts
 	if not entry.spill.goodSpill(): continue
 	if not entry.event.goodEvent(): continue

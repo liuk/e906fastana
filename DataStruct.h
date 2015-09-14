@@ -19,7 +19,7 @@ public:
     int spillID;
     int eventID;
     int status;
-    
+
     int MATRIX1;
     float weight;
     float intensity;
@@ -111,7 +111,7 @@ public:
     float px3, py3, pz3;      //momentum at z_st3 (1900 cm)
     float pxT, pyT, pzT;      //momentum when constrained to z_target
     float pxD, pyD, pzD;      //momentum when constrained to z_dump
-    float pxv, pyv, pzv;         //momentum when constrained to dimuon vertex
+    float pxv, pyv, pzv;      //momentum when constrained to dimuon vertex
     float tx_PT, ty_PT;       //slope of track segments at prop. tubes
     float thbend;             //bend angle in KMAG
 

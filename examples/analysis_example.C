@@ -23,10 +23,6 @@ void analysis_example()
     {
         dataTree->GetEntry(i);
 
-        //temporary cuts
-        if(spill.spillID >= 416709 && spill.spillID <= 424180) continue;   //bad taget position
-        if(spill.spillID >= 482574 && spill.spillID <= 484924) continue;   //flipped magnets
-
         //general cuts
         if(!spill.goodSpill()) continue;
         if(!event.goodEvent()) continue;
