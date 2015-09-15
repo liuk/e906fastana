@@ -30,14 +30,14 @@ bool Event::goodEvent()
 bool Dimuon::goodDimuon()
 {
     if(fabs(dx) > 2. || fabs(dy) > 2.) return false;
-    if(dz < -300. || dz > 150.) return false;
+    if(dz < -300. || dz > 200.) return false;
     if(fabs(dpx) > 3. || fabs(dpy) > 3.) return false;
     if(dpz < 30. || dpz > 120.) return false;
     if(x1 < 0. || x1 > 1.) return false;
     if(x2 < 0. || x2 > 1.) return false;
     if(xF < -1. || xF > 1.) return false;
-    if(fabs(trackSeparation) > 200.) return false;
-    if(chisq_dimuon > 25.) return false;
+    if(fabs(trackSeparation) > 250.) return false;
+    if(chisq_dimuon > 15.) return false;
     if(px1 < 0. || px2 > 0.) return false;
 
     return true;
@@ -45,7 +45,7 @@ bool Dimuon::goodDimuon()
 
 bool Dimuon::targetDimuon()
 {
-    if(dz > -90. || dz < -300.) return false;
+    if(dz > -60. || dz < -300.) return false;
     return true;
 }
 
@@ -209,7 +209,9 @@ void Spill::print()
 bool Track::goodTrack()
 {
     if(nHits <= 14) return false;
-    if(chisq/(nHits - 5) > 6.) return false;
+    if(chisq/(nHits - 5) > 5.) return false;
+    if(z0 < -400. || z0 > 200.) return false;
+    if(roadID == 0) return false;
     if(nHits < 18 && pz1 < 18.) return false;
 
     return true;
@@ -218,7 +220,7 @@ bool Track::goodTrack()
 bool Track::targetTrack()
 {
     if(z0 <= -300. || z0 >= 0.) return false;
-    if(sqrt(xD*xD + yD*yD) - sqrt(xT*xT + yT*yT) < 9.4431 - 0.356141*pzv + 0.00566071*pzv*pzv - 3.05556E-5*pzv*pzv*pzv) return false;
+    if(chisq_dump - chisq_target < 10.) return false;
 
     return true;
 }
@@ -226,7 +228,7 @@ bool Track::targetTrack()
 bool Track::dumpTrack()
 {
     if(z0 <= 0. && z0 >= 150.) return false;
-    if(sqrt(xT*xT + yT*yT) - sqrt(xD*xD + yD*yD) < 9.4431 - 0.356141*pzv + 0.00566071*pzv*pzv - 3.05556E-5*pzv*pzv*pzv) return false;
+    if(chisq_target - chisq_dump < 10.) return false;
 
     return true;
 }
