@@ -214,6 +214,10 @@ int main(int argc, char* argv[])
             posTrack.px3 = x_dummy;
             posTrack.py3 = y_dummy;
             posTrack.pz3 = z_dummy;
+            recPosTrack.getMomentumVertex(x_dummy, y_dummy, z_dummy);
+            posTrack.px0 = x_dummy;
+            posTrack.py0 = y_dummy;
+            posTrack.pz0 = z_dummy;
             posTrack.pxT = recPosTrack.getTargetMom().X();
             posTrack.pyT = recPosTrack.getTargetMom().Y();
             posTrack.pzT = recPosTrack.getTargetMom().Z();
@@ -224,9 +228,9 @@ int main(int argc, char* argv[])
             posTrack.tx_PT  = recPosTrack.getPTSlopeX();
             posTrack.ty_PT  = recPosTrack.getPTSlopeY();
             posTrack.thbend = atan(posTrack.px3/posTrack.pz3) - atan(posTrack.px1/posTrack.pz1);
-            posTrack.px0 = recDimuon.p_pos.Px();
-            posTrack.py0 = recDimuon.p_pos.Py();
-            posTrack.pz0 = recDimuon.p_pos.Pz();
+            posTrack.pxv = recDimuon.p_pos.Px();
+            posTrack.pyv = recDimuon.p_pos.Py();
+            posTrack.pzv = recDimuon.p_pos.Pz();
 
             SRecTrack recNegTrack = recEvent->getTrack(dimuon.negTrackID);
             negTrack.trackID   = recDimuon.trackID_neg;
@@ -266,6 +270,10 @@ int main(int argc, char* argv[])
             negTrack.px3 = x_dummy;
             negTrack.py3 = y_dummy;
             negTrack.pz3 = z_dummy;
+            recNegTrack.getMomentumVertex(x_dummy, y_dummy, z_dummy);
+            negTrack.px0 = x_dummy;
+            negTrack.py0 = y_dummy;
+            negTrack.pz0 = z_dummy;
             negTrack.pxT = recNegTrack.getTargetMom().X();
             negTrack.pyT = recNegTrack.getTargetMom().Y();
             negTrack.pzT = recNegTrack.getTargetMom().Z();
@@ -276,9 +284,9 @@ int main(int argc, char* argv[])
             negTrack.tx_PT  = recNegTrack.getPTSlopeX();
             negTrack.ty_PT  = recNegTrack.getPTSlopeY();
             negTrack.thbend = atan(negTrack.px3/negTrack.pz3) - atan(negTrack.px1/negTrack.pz1);
-            negTrack.px0 = recDimuon.p_neg.Px();
-            negTrack.py0 = recDimuon.p_neg.Py();
-            negTrack.pz0 = recDimuon.p_neg.Pz();
+            negTrack.pxv = recDimuon.p_neg.Px();
+            negTrack.pyv = recDimuon.p_neg.Py();
+            negTrack.pzv = recDimuon.p_neg.Pz();
 
             saveTree->Fill();
         }
