@@ -17,6 +17,7 @@ for entry in saveTree:
 	if not entry.event.goodEvent(): continue
 	if not entry.dimuon.goodDimuon(): continue
 	if not entry.dimuon.targetDimuon(): continue
+	if entry.posTrack.roadID*entry.negTrack.roadID > 0: continue
 	if not (entry.posTrack.goodTrack() and entry.negTrack.goodTrack()): continue
 	if not (entry.posTrack.targetTrack() and entry.negTrack.targetTrack()): continue
 

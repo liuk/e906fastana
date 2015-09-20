@@ -39,6 +39,7 @@ int main(int argc, char* argv[])
         if(!event.goodEvent()) continue;
         if(!dimuon.goodDimuon()) continue;
         if(!dimuon.targetDimuon()) continue;
+        if(posTrack.roadID*negTrack.roadID > 0) continue;
         if(!(posTrack.goodTrack() && negTrack.goodTrack())) continue;
         if(!(posTrack.targetTrack() && negTrack.targetTrack())) continue;
 
