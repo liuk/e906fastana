@@ -110,7 +110,7 @@ int main(int argc, char* argv[])
         if(!(mcdata || mixdata) && event.spillID != spill.spillID) //we have a new spill here
         {
             event.log("New spill!");
-            
+
             spill.spillID = event.spillID;
             badSpillFlag = false;
 
@@ -133,6 +133,27 @@ int main(int argc, char* argv[])
             spill.TARGPOS_CONTROL = atoi(row_spill->GetField(1));
             spill.quality         = atoi(row_spill->GetField(2));
             spill.liveProton      = atof(row_spill->GetField(3));
+            delete row_spill;
+            delete res_spill;
+
+            //Reconstruction info
+            sprintf(query, "SELECT (SELECT COUNT(*) FROM Event WHERE spillID=%d),"
+                                  "(SELECT COUNT(*) FROM kDimuon WHERE spillID=%d),"
+                                  "(SELECT COUNT(*) FROM kTrack WHERE spillID=%d)", spill.spillID, spill.spillID, spill.spillID);
+            res_spill = server->Query(query);
+            if(res_spill->GetRowCount() != 1)
+            {
+                ++nBadSpill_record;
+                spill.log("lacks reconstructed tables");
+
+                delete res_spill;
+                continue;
+            }
+
+            row_spill = res_spill->Next();
+            spill.nEvents = atoi(row_spill->GetField(0));
+            spill.nDimuons = atoi(row_spill->GetField(1));
+            spill.nTracks = atoi(row_spill->GetField(2));
             delete row_spill;
             delete res_spill;
 

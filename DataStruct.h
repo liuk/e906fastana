@@ -81,9 +81,13 @@ public:
     int targetPos;
     int TARGPOS_CONTROL;
 
+    int nEvents;
+    int nTracks;
+    int nDimuons;
+
     bool skipflag;     // will be true for MC data or random-mixing data
 
-    ClassDef(Spill, 3)
+    ClassDef(Spill, 4)
 };
 
 class Track : public TObject
