@@ -12,6 +12,8 @@ class Event : public TObject
 public:
     Event();
     bool goodEvent();
+    float weightedIntensity();
+
     void log(TString info) { std::cout << "RunID " << runID << ", spillID " << spillID << ", eventID " << eventID << ": " << info << std::endl; }
 
 public:
@@ -22,9 +24,9 @@ public:
 
     int MATRIX1;
     float weight;
-    float intensity;
+    float intensity[33];
 
-    ClassDef(Event, 3)
+    ClassDef(Event, 4)
 };
 
 class Dimuon : public TObject

@@ -230,7 +230,11 @@ int main(int argc, char* argv[])
         //event info
         if(!(mcdata || mixdata))
         {
-            sprintf(query, "SELECT a.`RF+00`,b.MATRIX1,c.status FROM QIE AS a,Event AS b,kEvent AS c WHERE a.runID=%d "
+            sprintf(query, "SELECT a.`RF-16`,a.`RF-15`,a.`RF-14`,a.`RF-13`,a.`RF-12`,a.`RF-11`,a.`RF-10`,a.`RF-09`,"
+                "a.`RF-08`,a.`RF-07`,a.`RF-06`,a.`RF-05`,a.`RF-04`,a.`RF-03`,a.`RF-02`,a.`RF-01`,a.`RF+00`,a.`RF+01`,"
+                "a.`RF+02`,a.`RF+03`,a.`RF+04`,a.`RF+05`,a.`RF+06`,a.`RF+07`,a.`RF+08`,a.`RF+09`,a.`RF+10`,a.`RF+11`,"
+                "a.`RF+12`,a.`RF+13`,a.`RF+14`,a.`RF+15`,a.`RF+16`,"
+                "b.MATRIX1,c.status FROM QIE AS a,Event AS b,kEvent AS c WHERE a.runID=%d "
                 "AND a.eventID=%d AND b.runID=%d AND b.eventID=%d AND c.runID=%d AND c.eventID=%d",
                 event.runID, event.eventID, event.runID, event.eventID, event.runID, event.eventID);
             TSQLResult* res_event = server->Query(query);
@@ -243,9 +247,12 @@ int main(int argc, char* argv[])
             }
 
             TSQLRow* row_event = res_event->Next();
-            event.intensity = spill.QIEUnit*atof(row_event->GetField(0));
-            event.MATRIX1 = atoi(row_event->GetField(1));
-            event.status = atoi(row_event->GetField(2));
+            for(int j = 0; j < 33; ++j)
+            {
+                event.intensity[j] = spill.QIEUnit*atof(row_event->GetField(j));
+            }
+            event.MATRIX1 = atoi(row_event->GetField(33));
+            event.status = atoi(row_event->GetField(34));
             event.weight = 1.;
             delete row_event;
             delete res_event;
@@ -266,7 +273,7 @@ int main(int argc, char* argv[])
             }
 
             TSQLRow* row_event = res_event->Next();
-            event.intensity = 1.;
+            event.intensity[16] = 1.;
             event.MATRIX1 = atoi(row_event->GetField(0));
             event.weight = atof(row_event->GetField(2));
             event.status = atoi(row_event->GetField(3));
