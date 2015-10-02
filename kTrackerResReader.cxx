@@ -100,19 +100,19 @@ int main(int argc, char* argv[])
         {
             event.MATRIX1 = rawMCEvent->isEmuTriggered() ? 1 : -1;
             event.weight = rawMCEvent->weight;
-            event.intensity = 1.;
+            event.intensity[16] = 1.;
         }
         else if(mixdata)
         {
             event.MATRIX1 = 1;
             event.weight = 1.;
-            event.intensity = 1.;
+            event.intensity[16] = 1.;
         }
         else
         {
             event.MATRIX1 = recEvent->isTriggeredBy(SRawEvent::MATRIX1) ? 1 : -1;
             event.weight = 1.;
-            event.intensity = rawEvent->getIntensity();
+            for(int j = -16; j <= 16; ++j) event.intensity[i+16] = rawEvent->getIntensity(i);
         }
 
         //spill level information
