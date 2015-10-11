@@ -19,6 +19,8 @@ ClassImp(Track)
 #define SPILLID_MIN_70 676498
 #define SPILLID_MAX_70 696455
 
+#define PEDESTAL 42.
+
 Event::Event() : runID(-1), spillID(-1), eventID(-1), status(-1), MATRIX1(-1), weight(0.)
 {
     for(int i = 0; i < 33; ++i) intensity[i] = 0.;
@@ -26,7 +28,7 @@ Event::Event() : runID(-1), spillID(-1), eventID(-1), status(-1), MATRIX1(-1), w
 
 bool Event::goodEvent()
 {
-    return MATRIX1 > 0;
+    return MATRIX1 > 0 && status == 0;
 }
 
 float Event::weightedIntensity()
