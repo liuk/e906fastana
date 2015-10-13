@@ -41,8 +41,8 @@ int main(int argc, char* argv[])
     bool dump = opts.Contains("dump");
     int polarity = opts.Contains("rev") ? -1 : 1;
 
-    bool reqSpill = !(mc && mix);
-    bool reqEvent = !(mix && like);
+    bool reqSpill = !(mc || mix);
+    bool reqEvent = !(mix || like);
     if(like) polarity = 0;
 
     //loop over all the events
