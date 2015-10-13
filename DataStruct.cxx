@@ -50,7 +50,7 @@ float Event::weightedIntensity()
     return sum/13.;
 }
 
-bool Dimuon::goodDimuon()
+bool Dimuon::goodDimuon(int polarity)
 {
     if(fabs(dx) > 2. || fabs(dy) > 2.) return false;
     if(dz < -300. || dz > 200.) return false;
@@ -61,7 +61,7 @@ bool Dimuon::goodDimuon()
     if(xF < -1. || xF > 1.) return false;
     if(fabs(trackSeparation) > 250.) return false;
     if(chisq_dimuon > 15.) return false;
-    if(px1 < 0. || px2 > 0.) return false;
+    if(polarity*px1 < 0. || polarity*px2 > 0.) return false;
 
     return true;
 }

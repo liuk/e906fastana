@@ -27,5 +27,7 @@
 *.out
 *.app
 
+*Dict.h
+*Dict.cxx
 *.root
 *.txt
