@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
     int polarity = opts.Contains("rev") ? -1 : 1;
 
     bool reqSpill = !(mc && mix);
-    bool reqEvent = !mix;
+    bool reqEvent = !(mix && like);
     if(like) polarity = 0;
 
     //loop over all the events
