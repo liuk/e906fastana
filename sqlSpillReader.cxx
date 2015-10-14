@@ -31,7 +31,7 @@ int main(int argc, char* argv[])
 
     char query[2000];
     //sprintf(query, "SELECT spillID FROM Spill WHERE runID in (SELECT run FROM summary.production WHERE ktracked=1) ORDER BY spillID");
-    sprintf(query, "SELECT spillID FROM Spill ORDER BY spillID");
+    sprintf(query, "SELECT runID,spillID FROM Spill ORDER BY spillID");
 
     TSQLResult* res = server->Query(query);
     int nSpillsRow = res->GetRowCount();
@@ -48,13 +48,30 @@ int main(int argc, char* argv[])
 
         //basic spillID info
         TSQLRow* row = res->Next();
-        spill.spillID = atoi(row->GetField(0));
+        int runID = atoi(row->GetField(0));
+        spill.spillID = atoi(row->GetField(1));
         delete row;
+
+        //run configuration
+        sprintf(query, "SELECT value FROM Run WHERE runID=%d AND name IN ('KMAG-Avg','MATRIX3Prescale') ORDER BY name", runID);
+        TSQLResult* res_spill = server->Query(query);
+        if(res_spill->GetRowCount() != 2)
+        {
+            ++nBadSpill_record;
+            spill.log("lacks Run table info");
+
+            delete res_spill;
+            continue;
+        }
+
+        TSQLRow* row_spill = res_spill->Next();  spill.KMAG = atof(row_spill->GetField(0)); delete row_spill;
+        row_spill = res_spill->Next(); spill.MATRIX3Prescale = atoi(row_spill->GetField(0)); delete row_spill;
+        delete res_spill;
 
         //target position
         sprintf(query, "SELECT a.targetPos,b.value,a.dataQuality,a.liveProton FROM Spill AS a,Target AS b WHERE a.spillID"
             "=%d AND b.spillID=%d AND b.name='TARGPOS_CONTROL' AND a.liveProton IS NOT NULL", spill.spillID, spill.spillID);
-        TSQLResult* res_spill = server->Query(query);
+        res_spill = server->Query(query);
         if(res_spill->GetRowCount() != 1)
         {
             ++nBadSpill_record;
@@ -64,7 +81,7 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        TSQLRow* row_spill = res_spill->Next();
+        row_spill = res_spill->Next();
         spill.targetPos       = atoi(row_spill->GetField(0));
         spill.TARGPOS_CONTROL = atoi(row_spill->GetField(1));
         spill.quality         = atoi(row_spill->GetField(2));
@@ -114,9 +131,6 @@ int main(int argc, char* argv[])
         spill.inhibitSum = atof(row_spill->GetField(3));
         spill.busySum    = atof(row_spill->GetField(4));
         spill.dutyFactor = atof(row_spill->GetField(5));
-
-        spill.liveG2SEM  = spill.G2SEM*(spill.QIESum - spill.inhibitSum - spill.busySum)/spill.QIESum;
-        spill.QIEUnit    = spill.G2SEM/spill.QIESum;
 
         delete row_spill;
         delete res_spill;

@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
         dataTree->GetEntry(i);
 
         if(!spill.goodSpill()) continue;
-        np[spill.targetPos] = np[spill.targetPos] + spill.G2SEM*(spill.QIESum - spill.inhibitSum - spill.busySum)/spill.QIESum;
+        np[spill.targetPos] = np[spill.targetPos] + spill.liveG2SEM();
     }
 
     for(int i = 1; i <= nTargets; ++i)

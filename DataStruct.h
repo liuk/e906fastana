@@ -12,7 +12,7 @@ class Event : public TObject
 public:
     Event();
     bool goodEvent();
-    float weightedIntensity();
+    float weightedIntensity(float unit = 1.);
 
     void log(TString info) { std::cout << "RunID " << runID << ", spillID " << spillID << ", eventID " << eventID << ": " << info << std::endl; }
 
@@ -64,6 +64,9 @@ public:
     void print();
     void log(TString info) { std::cout << "SpillID " << spillID << ": " << info << std::endl; }
 
+    float QIEUnit();
+    float liveG2SEM();
+
 public:
     float TSGo;
     float acceptedMatrix1;
@@ -74,9 +77,7 @@ public:
     float inhibitSum;
     float busySum;
     float dutyFactor;
-    float liveG2SEM;
     float liveProton;
-    float QIEUnit;
 
     int spillID;
     int quality;
@@ -87,9 +88,12 @@ public:
     int nTracks;
     int nDimuons;
 
+    float KMAG;
+    int MATRIX3Prescale;
+
     bool skipflag;     // will be true for MC data or random-mixing data
 
-    ClassDef(Spill, 4)
+    ClassDef(Spill, 5)
 };
 
 class Track : public TObject

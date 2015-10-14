@@ -19,7 +19,7 @@ ClassImp(Track)
 #define SPILLID_MIN_70 676498
 #define SPILLID_MAX_70 696455
 
-#define PEDESTAL 42.
+#define PEDESTAL 36.791
 
 Event::Event() : runID(-1), spillID(-1), eventID(-1), status(-1), MATRIX1(-1), weight(0.)
 {
@@ -31,7 +31,7 @@ bool Event::goodEvent()
     return MATRIX1 > 0 && status == 0;
 }
 
-float Event::weightedIntensity()
+float Event::weightedIntensity(float unit)
 {
     double weight[] = {0.000814246430361413, 0.0028662467149288, 0.00597015326639906, 0.0121262946061061,
                        0.0300863195179747, 0.0777262437180552, 0.159446650644417, 0.259932709364831,
@@ -42,12 +42,14 @@ float Event::weightedIntensity()
                        0.108504562083177, 0.0540099990325891, 0.019218568399343, 0.00308302089003216};
 
     double sum = 0.;
+    double wsum = 0.;
     for(int i = -13; i <= 13; ++i)
     {
-        sum += (weight[i+13]*intensity[i+16]);
+        sum += (weight[i+13]*(intensity[i+16] - PEDESTAL));
+        wsum += weight[i+13];
     }
 
-    return sum/13.;
+    return unit*sum/wsum;
 }
 
 bool Dimuon::goodDimuon(int polarity)
@@ -213,6 +215,16 @@ int Spill::triggerSet()
     return -1;
 }
 
+float Spill::QIEUnit()
+{
+    return G2SEM/(QIESum - 588*360000*PEDESTAL);
+}
+
+float Spill::liveG2SEM()
+{
+    return (QIESum - inhibitSum - busySum)*QIEUnit();
+}
+
 void Spill::print()
 {
     using namespace std;
@@ -227,7 +239,9 @@ void Spill::print()
     cout << " inhibitSum:        " << inhibitSum << endl;
     cout << " busySum:           " << busySum << endl;
     cout << " dutyFactor:        " << dutyFactor << endl;
-    cout << " liveG2SEM:         " << liveG2SEM << endl;
+    cout << " liveG2SEM:         " << liveG2SEM() << endl;
+    cout << " liveProton:        " << liveProton << endl;
+    cout << " QIEUnit:           " << QIEUnit() << endl;
 }
 
 bool Track::goodTrack()

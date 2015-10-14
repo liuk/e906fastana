@@ -114,10 +114,26 @@ int main(int argc, char* argv[])
             spill.spillID = event.spillID;
             badSpillFlag = false;
 
+            //run configuration
+            sprintf(query, "SELECT value FROM Run WHERE runID=%d AND name IN ('KMAG-Avg','MATRIX3Prescale') ORDER BY name", event.runID);
+            TSQLResult* res_spill = server->Query(query);
+            if(res_spill->GetRowCount() != 2)
+            {
+                ++nBadSpill_record;
+                spill.log("lacks Run table info");
+
+                delete res_spill;
+                continue;
+            }
+
+            TSQLRow* row_spill = res_spill->Next();  spill.KMAG = atof(row_spill->GetField(0)); delete row_spill;
+            row_spill = res_spill->Next(); spill.MATRIX3Prescale = atoi(row_spill->GetField(0)); delete row_spill;
+            delete res_spill;
+
             //target position
             sprintf(query, "SELECT a.targetPos,b.value,a.dataQuality,a.liveProton FROM Spill AS a,Target AS b WHERE a.spillID"
                 "=%d AND b.spillID=%d AND b.name='TARGPOS_CONTROL' AND a.liveProton IS NOT NULL", event.spillID, event.spillID);
-            TSQLResult* res_spill = server->Query(query);
+            res_spill = server->Query(query);
             if(res_spill->GetRowCount() != 1)
             {
                 ++nBadSpill_record;
@@ -128,7 +144,7 @@ int main(int argc, char* argv[])
                 continue;
             }
 
-            TSQLRow* row_spill = res_spill->Next();
+            row_spill = res_spill->Next();
             spill.targetPos       = atoi(row_spill->GetField(0));
             spill.TARGPOS_CONTROL = atoi(row_spill->GetField(1));
             spill.quality         = atoi(row_spill->GetField(2));
@@ -179,9 +195,6 @@ int main(int argc, char* argv[])
             spill.inhibitSum = atof(row_spill->GetField(3));
             spill.busySum    = atof(row_spill->GetField(4));
             spill.dutyFactor = atof(row_spill->GetField(5));
-
-            spill.liveG2SEM  = spill.G2SEM*(spill.QIESum - spill.inhibitSum - spill.busySum)/spill.QIESum;
-            spill.QIEUnit    = spill.G2SEM/spill.QIESum;
 
             delete row_spill;
             delete res_spill;
@@ -249,7 +262,7 @@ int main(int argc, char* argv[])
             TSQLRow* row_event = res_event->Next();
             for(int j = 0; j < 33; ++j)
             {
-                event.intensity[j] = spill.QIEUnit*atof(row_event->GetField(j));
+                event.intensity[j] = atof(row_event->GetField(j));
             }
             event.MATRIX1 = atoi(row_event->GetField(33));
             event.status = atoi(row_event->GetField(34));
