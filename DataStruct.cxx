@@ -80,7 +80,7 @@ bool Dimuon::dumpDimuon()
     return true;
 }
 
-Spill::Spill() : spillID(-1), quality(-1), targetPos(-1), TARGPOS_CONTROL(-1), skipflag(false)
+Spill::Spill() : spillID(-1), quality(-1), targetPos(-1), TARGPOS_CONTROL(-1), nEvents(0), nTracks(0), nDimuons(0), skipflag(false)
 {}
 
 bool Spill::goodSpill()

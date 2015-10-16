@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <cmath>
 #include <stdlib.h>
 
@@ -152,19 +153,24 @@ int main(int argc, char* argv[])
     spill.skipflag = mcdata || mixdata;
 
     //pre-load spill information if provided
-    spill.skipflag = mcdata || mixdata;
     map<int, Spill> spillBank;
     if(!spill.skipflag && argc > 6)
     {
-        TFile* spillFile = new TFile(argv[6]);
-        TTree* spillTree = (TTree*)spillFile->Get("save");
-
-        spillTree->SetBranchAddress("spill", &p_spill);
-
-        for(int i = 0; i < spillTree->GetEntries(); ++i)
+        if(ifstream(argv[6]))
         {
-            spillTree->GetEntry(i);
-            spillBank.insert(map<int, Spill>::value_type(spill.spillID, spill));
+            TFile* spillFile = new TFile(argv[6]);
+            TTree* spillTree = (TTree*)spillFile->Get("save");
+            spillTree->SetBranchAddress("spill", &p_spill);
+
+            for(int i = 0; i < spillTree->GetEntries(); ++i)
+            {
+                spillTree->GetEntry(i);
+                spillBank.insert(map<int, Spill>::value_type(spill.spillID, spill));
+            }
+        }
+        else
+        {
+            spill.skipflag = true;
         }
     }
 
@@ -226,7 +232,7 @@ int main(int argc, char* argv[])
         delete row_dimuon;
 
         //spill info and cuts
-        if(!(mcdata || mixdata) && event.spillID != spill.spillID) //we have a new spill here
+        if(!spill.skipflag && event.spillID != spill.spillID) //we have a new spill here
         {
             event.log("New spill!");
 
