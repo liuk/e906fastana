@@ -85,7 +85,7 @@ Spill::Spill() : spillID(-1), quality(-1), targetPos(-1), TARGPOS_CONTROL(-1), n
 
 bool Spill::goodSpill()
 {
-    return skipflag || (goodTargetPos() && goodTSGo() && goodScaler() && goodBeam() && goodBeamDAQ());
+    return skipflag || quality == 0; //(goodTargetPos() && goodTSGo() && goodScaler() && goodBeam() && goodBeamDAQ());
 }
 
 bool Spill::goodTargetPos()
@@ -202,6 +202,7 @@ bool Spill::goodBeamDAQ()
 
 int Spill::triggerSet()
 {
+    if(spillID >= 303215 && spillID <= 310954) return -1;           //bad QIE range
     if(spillID >= 371870 && spillID <= 376533) return -1;           //timing shift in #59
     if(spillID >= 378366 && spillID <= 379333) return -1;           //timing shift in #59
     if(spillID >= 416207 && spillID <= 424180) return -1;           //manual target movement in #62
