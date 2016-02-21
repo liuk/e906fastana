@@ -112,7 +112,7 @@ int main(int argc, char* argv[])
         {
             event.MATRIX1 = recEvent->isTriggeredBy(SRawEvent::MATRIX1) ? 1 : -1;
             event.weight = 1.;
-            for(int j = -16; j <= 16; ++j) event.intensity[i+16] = rawEvent->getIntensity(i);
+            for(int j = -16; j <= 16; ++j) event.intensity[j+16] = rawEvent->getIntensity(j);
         }
 
         //spill level information
