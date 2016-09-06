@@ -19,8 +19,6 @@ ClassImp(Track)
 #define SPILLID_MIN_70 676498
 #define SPILLID_MAX_70 696455
 
-#define PEDESTAL 36.791
-
 Event::Event() : runID(-1), spillID(-1), eventID(-1), status(-1), MATRIX1(-1), weight(0.)
 {
     for(int i = 0; i < 33; ++i) intensity[i] = 0.;
@@ -45,11 +43,11 @@ float Event::weightedIntensity(float unit)
     double wsum = 0.;
     for(int i = -13; i <= 13; ++i)
     {
-        sum += (weight[i+13]*(intensity[i+16] - PEDESTAL));
+        sum += (weight[i+13]*(intensity[i+16] - PEDESTAL*unit));
         wsum += weight[i+13];
     }
 
-    return unit*sum/wsum;
+    return sum/wsum;
 }
 
 bool Dimuon::goodDimuon(int polarity)
@@ -85,7 +83,7 @@ Spill::Spill() : spillID(-1), quality(-1), targetPos(-1), TARGPOS_CONTROL(-1), n
 
 bool Spill::goodSpill()
 {
-    return skipflag || quality == 0; //(goodTargetPos() && goodTSGo() && goodScaler() && goodBeam() && goodBeamDAQ());
+    return skipflag || (goodTargetPos() && goodScaler() && goodBeam() && goodBeamDAQ() && goodMagnet() && goodReco());
 }
 
 bool Spill::goodTargetPos()
@@ -96,72 +94,50 @@ bool Spill::goodTargetPos()
     return true;
 }
 
-bool Spill::goodTSGo()
-{
-    int trigSet = triggerSet();
-    if(trigSet < 0)
-    {
-        return false;
-    }
-    else if(trigSet <= 61)
-    {
-        if(TSGo < 1E3 || TSGo > 8E3) return false;
-    }
-    else if(trigSet <= 70)
-    {
-        if(TSGo < 1E2 || TSGo > 6E3) return false;
-    }
-    else
-    {
-        return false;
-    }
-
-    return true;
-}
-
 bool Spill::goodScaler()
 {
-    int trigSet = triggerSet();
-    if(trigSet < 0)
+    if(trigSet == 57 || trigSet == 59)
     {
-        return false;
-    }
-    else if(trigSet <= 61)
-    {
+        if(TSGo < 1E3 || TSGo > 8E3) return false;
         if(acceptedMatrix1 < 1E3 || acceptedMatrix1 > 8E3) return false;
         if(afterInhMatrix1 < 1E3 || afterInhMatrix1 > 3E4) return false;
         if(acceptedMatrix1/afterInhMatrix1 < 0.2 || acceptedMatrix1/afterInhMatrix1 > 0.9) return false;
     }
-    else if(trigSet <= 70)
+    else if(trigSet == 61)
     {
-        if(acceptedMatrix1 < 1E2 || acceptedMatrix1 > 6E3) return false;
-        if(afterInhMatrix1 < 1E2 || afterInhMatrix1 > 1E4) return false;
+        if(TSGo < 1E3 || TSGo > 12E3) return false;
+        if(acceptedMatrix1 < 1E3 || acceptedMatrix1 > 12E3) return false;
+        if(afterInhMatrix1 < 1E3 || afterInhMatrix1 > 1E6) return false;
+        if(acceptedMatrix1/afterInhMatrix1 < 0.0 || acceptedMatrix1/afterInhMatrix1 > 0.9) return false;
+    }
+    else if(trigSet == 62 || trigSet == 67 || trigSet == 70)
+    {
+        if(TSGo < 100 || TSGo > 6000) return false;
+        if(acceptedMatrix1 < 100 || acceptedMatrix1 > 6000) return false;
+        if(afterInhMatrix1 < 100 || afterInhMatrix1 > 10000) return false;
         if(acceptedMatrix1/afterInhMatrix1 < 0.2 || acceptedMatrix1/afterInhMatrix1 > 1.05) return false;
     }
     else
     {
         return false;
     }
-
     return true;
 }
 
 bool Spill::goodBeam()
 {
-    int trigSet = triggerSet();
-    if(trigSet < 0)
+    if(trigSet == 57 || trigSet == 59)
     {
-        return false;
-    }
-    else if(trigSet <= 61)
-    {
-        //if(NM3ION < 2E12 || NM3ION > 1E13) return false;
         if(G2SEM < 2E12 || G2SEM > 1E13) return false;
         if(dutyFactor < 15. || dutyFactor > 60.) return false;
     }
-    else if(trigSet <= 70)
+    else if(trigSet == 61)
     {
-        //if(NM3ION < 2E12 || NM3ION > 1E13) return false;
+        if(G2SEM < 2E12 || G2SEM > 1E13) return false;
+        if(dutyFactor < 15. || dutyFactor > 60.) return false;
+    }
+    else if(trigSet == 62 || trigSet == 67 || trigSet == 70)
+    {
         if(G2SEM < 2E12 || G2SEM > 1E13) return false;
         if(dutyFactor < 10. || dutyFactor > 60.) return false;
     }
@@ -169,24 +145,24 @@ bool Spill::goodBeam()
     {
         return false;
     }
-
     return true;
 }
 
 bool Spill::goodBeamDAQ()
 {
-    int trigSet = triggerSet();
-    if(trigSet < 0)
-    {
-        return false;
-    }
-    else if(trigSet <= 61)
+    if(trigSet == 57 || trigSet == 59)
     {
         if(QIESum < 4E10 || QIESum > 1E12) return false;
         if(inhibitSum < 4E9 || inhibitSum > 1E11) return false;
         if(busySum < 4E9 || busySum > 1E11) return false;
     }
-    else if(trigSet <= 70)
+    else if(trigSet == 61)
+    {
+        if(QIESum < 4E10 || QIESum > 1E12) return false;
+        if(inhibitSum < 4E9 || inhibitSum > 1E11) return false;
+        if(busySum < 4E9 || busySum > 1E11) return false;
+    }
+    else if(trigSet == 62 || trigSet == 67 || trigSet == 70)
     {
         if(QIESum < 4E10 || QIESum > 1E12) return false;
         if(inhibitSum < 4E9 || inhibitSum > 2E11) return false;
@@ -196,8 +172,36 @@ bool Spill::goodBeamDAQ()
     {
         return false;
     }
-
     return true;
+}
+
+bool Spill::goodMagnet()
+{
+    if(trigSet == 57 || trigSet == 59)
+    {
+        if(FMAG < 1950 || FMAG > 2050) return false;
+        if(KMAG < 1550 || KMAG > 1650) return false;
+    }
+    else if(trigSet == 61)
+    {
+        if(FMAG < 200 || FMAG > 500) return false;
+        if(KMAG < 1550 || KMAG > 1650) return false;
+    }
+    else if(trigSet == 62 || trigSet == 67 || trigSet == 70)
+    {
+        if(FMAG < 1950 || FMAG > 2050) return false;
+        if(KMAG < 1550 || KMAG > 1650) return false;
+    }
+    else
+    {
+        return false;
+    }
+    return true;
+}
+
+bool Spill::goodReco()
+{
+    return nTracks > 0;
 }
 
 int Spill::triggerSet()

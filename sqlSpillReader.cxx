@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
     server->Exec(Form("USE %s", argv[1]));
     cout << "Reading schema " << argv[1] << " and save to " << argv[2] << endl;
 
-    char query[2000];
+    char query[5000];
     //sprintf(query, "SELECT spillID FROM Spill WHERE runID in (SELECT run FROM summary.production WHERE ktracked=1) ORDER BY spillID");
     sprintf(query, "SELECT runID,spillID FROM Spill ORDER BY spillID");
 
@@ -50,32 +50,33 @@ int main(int argc, char* argv[])
         TSQLRow* row = res->Next();
         int runID = atoi(row->GetField(0));
         spill.spillID = atoi(row->GetField(1));
+        spill.trigSet = spill.triggerSet();
         delete row;
 
-        //run configuration
-        sprintf(query, "SELECT value FROM Run WHERE runID=%d AND name IN ('KMAG-Avg','MATRIX3Prescale') ORDER BY name", runID);
+        //magnet configuration
+        sprintf(query, "SELECT value FROM Beam WHERE spillID=%d AND name IN ('F:NM3S','F:NM4AN') ORDER BY name", spill.spillID);
         TSQLResult* res_spill = server->Query(query);
         if(res_spill->GetRowCount() != 2)
         {
             ++nBadSpill_record;
-            spill.log("lacks Run table info");
+            spill.log(Form("lacks magnet info %d", res_spill->GetRowCount()));
 
             delete res_spill;
             continue;
         }
 
-        TSQLRow* row_spill = res_spill->Next();  spill.KMAG = atof(row_spill->GetField(0)); delete row_spill;
-        row_spill = res_spill->Next(); spill.MATRIX3Prescale = atoi(row_spill->GetField(0)); delete row_spill;
+        TSQLRow* row_spill = res_spill->Next(); spill.FMAG = atof(row_spill->GetField(0)); delete row_spill;
+        row_spill = res_spill->Next();          spill.KMAG = atoi(row_spill->GetField(0)); delete row_spill;
         delete res_spill;
 
         //target position
         sprintf(query, "SELECT a.targetPos,b.value,a.dataQuality,a.liveProton FROM Spill AS a,Target AS b WHERE a.spillID"
-            "=%d AND b.spillID=%d AND b.name='TARGPOS_CONTROL' AND a.liveProton IS NOT NULL", spill.spillID, spill.spillID);
+            "=%d AND b.spillID=%d AND b.name='TARGPOS_CONTROL'", spill.spillID, spill.spillID);
         res_spill = server->Query(query);
         if(res_spill->GetRowCount() != 1)
         {
             ++nBadSpill_record;
-            spill.log("lacks target position info");
+            spill.log(Form("lacks target position info %d", res_spill->GetRowCount()));
 
             delete res_spill;
             continue;
@@ -85,7 +86,7 @@ int main(int argc, char* argv[])
         spill.targetPos       = atoi(row_spill->GetField(0));
         spill.TARGPOS_CONTROL = atoi(row_spill->GetField(1));
         spill.quality         = atoi(row_spill->GetField(2));
-        spill.liveProton      = atof(row_spill->GetField(3));
+        spill.liveProton      = row_spill->GetField(3) == NULL ? -1. : atof(row_spill->GetField(3));
         delete row_spill;
         delete res_spill;
 
@@ -97,7 +98,7 @@ int main(int argc, char* argv[])
         if(res_spill->GetRowCount() != 1)
         {
             ++nBadSpill_record;
-            spill.log("lacks reconstructed tables");
+            spill.log(Form("lacks reconstructed tables %d", res_spill->GetRowCount()));
 
             delete res_spill;
             continue;
@@ -118,7 +119,7 @@ int main(int argc, char* argv[])
         if(res_spill->GetRowCount() != 1)
         {
             ++nBadSpill_record;
-            spill.log("lacks Beam/BeamDAQ info");
+            spill.log(Form("lacks Beam/BeamDAQ info %d", res_spill->GetRowCount()));
 
             delete res_spill;
             continue;
@@ -135,14 +136,14 @@ int main(int argc, char* argv[])
         delete row_spill;
         delete res_spill;
 
-        //Scalar table
+        //Scalar table -- EOS
         sprintf(query, "SELECT value FROM Scaler WHERE spillType='EOS' AND spillID=%d AND scalerName "
             "in ('TSGo','AcceptedMatrix1','AfterInhMatrix1') ORDER BY scalerName", spill.spillID);
         res_spill = server->Query(query);
         if(res_spill->GetRowCount() != 3)
         {
             ++nBadSpill_record;
-            spill.log("lacks scaler info");
+            spill.log(Form("lacks scaler info %d", res_spill->GetRowCount()));
 
             delete res_spill;
             continue;
@@ -153,23 +154,38 @@ int main(int argc, char* argv[])
         row_spill = res_spill->Next(); spill.TSGo            = atof(row_spill->GetField(0)); delete row_spill;
         delete res_spill;
 
-        if(spill.goodSpill())
+        //Scalar table -- BOS
+        sprintf(query, "SELECT value FROM Scaler WHERE spillType='BOS' AND spillID=%d AND scalerName "
+            "in ('TSGo','AcceptedMatrix1','AfterInhMatrix1') ORDER BY scalerName", spill.spillID);
+        res_spill = server->Query(query);
+        if(res_spill->GetRowCount() != 3)
         {
-            saveTree->Fill();
-            ++nGoodSpill;
-
-            if(nGoodSpill % 100 == 0) saveTree->AutoSave("self");
+            spill.log(Form("lacks scaler info %d", res_spill->GetRowCount()));
+            spill.acceptedMatrix1BOS = -1;
+            spill.afterInhMatrix1BOS = -1;
+            spill.TSGoBOS = -1;
         }
         else
+        {
+            row_spill = res_spill->Next(); spill.acceptedMatrix1BOS = atof(row_spill->GetField(0)); delete row_spill;
+            row_spill = res_spill->Next(); spill.afterInhMatrix1BOS = atof(row_spill->GetField(0)); delete row_spill;
+            row_spill = res_spill->Next(); spill.TSGoBOS            = atof(row_spill->GetField(0)); delete row_spill;
+        }
+        delete res_spill;
+
+        if(!spill.goodSpill())
         {
             ++nBadSpill_quality;
             spill.log("spill bad");
             spill.print();
         }
+
+        //Save
+        saveTree->Fill();
     }
     delete res;
 
-    cout << "sqlReader finished successfully." << endl;
+    cout << "sqlSpillReader finished successfully." << endl;
     cout << nGoodSpill << " good spills, " << nBadSpill_record << " spills have insufficient info in database, " << nBadSpill_quality << " rejected because of bad quality." << endl;
 
     saveFile->cd();

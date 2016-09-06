@@ -7,6 +7,8 @@
 #include <TROOT.h>
 #include <TString.h>
 
+#define PEDESTAL 36.791
+
 class Event : public TObject
 {
 public:
@@ -24,9 +26,10 @@ public:
 
     int MATRIX1;
     float weight;
+    int occupancy[9];      // 0 - 8 stands for D1 D2 D3 H1 H2 H3 H4 P1 P2
     float intensity[33];
 
-    ClassDef(Event, 4)
+    ClassDef(Event, 5)
 };
 
 class Dimuon : public TObject
@@ -54,10 +57,11 @@ public:
     Spill();
     bool goodSpill();
     bool goodTargetPos();
-    bool goodTSGo();
     bool goodScaler();
     bool goodBeam();
     bool goodBeamDAQ();
+    bool goodMagnet();
+    bool goodReco();
 
     int triggerSet();
 
@@ -71,6 +75,9 @@ public:
     float TSGo;
     float acceptedMatrix1;
     float afterInhMatrix1;
+    float TSGoBOS;
+    float acceptedMatrix1BOS;
+    float afterInhMatrix1BOS;
     float NM3ION;
     float G2SEM;
     float QIESum;
@@ -79,21 +86,23 @@ public:
     float dutyFactor;
     float liveProton;
 
+    int trigSet;
     int spillID;
     int quality;
     int targetPos;
     int TARGPOS_CONTROL;
+
 
     int nEvents;
     int nTracks;
     int nDimuons;
 
     float KMAG;
-    int MATRIX3Prescale;
+    float FMAG;
 
     bool skipflag;     // will be true for MC data or random-mixing data
 
-    ClassDef(Spill, 5)
+    ClassDef(Spill, 6)
 };
 
 class Track : public TObject
@@ -109,6 +118,7 @@ public:
     int charge;
     int nHits, nHitsSt1, nHitsSt2, nHitsSt3;
     int nHitsSt4H, nHitsSt4V;
+    int kmstatus;
     float chisq;
     float chisq_dump, chisq_target, chisq_upstream;  // chi squared when force the track to cross z = 40, -130, -480 cm
     float x1, y1, z1;
@@ -125,7 +135,7 @@ public:
     float tx_PT, ty_PT;       //slope of track segments at prop. tubes
     float thbend;             //bend angle in KMAG
 
-    ClassDef(Track, 5)
+    ClassDef(Track, 6)
 };
 
 #endif
