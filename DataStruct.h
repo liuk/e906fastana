@@ -26,6 +26,7 @@ public:
 
     int MATRIX1;
     float weight;
+    
     int occupancy[9];      // 0 - 8 stands for D1 D2 D3 H1 H2 H3 H4 P1 P2
     float intensity[33];
 
@@ -92,10 +93,12 @@ public:
     int targetPos;
     int TARGPOS_CONTROL;
 
-
     int nEvents;
     int nTracks;
     int nDimuons;
+
+    int eventID_min;
+    int eventID_max;
 
     float KMAG;
     float FMAG;

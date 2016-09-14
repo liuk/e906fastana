@@ -34,10 +34,10 @@ int main(int argc, char* argv[])
     sprintf(query, "SELECT runID,spillID FROM Spill ORDER BY spillID");
 
     TSQLResult* res = server->Query(query);
-    int nSpillsRow = res->GetRowCount();
+    int nSpillsRow = 100;//res->GetRowCount();
 
-    int nGoodSpill = 0;
     int nBadSpill_record = 0;
+    int nBadSpill_duplicate = 0;
     int nBadSpill_quality = 0;
     for(int i = 0; i < nSpillsRow; ++i)
     {
@@ -58,8 +58,8 @@ int main(int argc, char* argv[])
         TSQLResult* res_spill = server->Query(query);
         if(res_spill->GetRowCount() != 2)
         {
-            ++nBadSpill_record;
             spill.log(Form("lacks magnet info %d", res_spill->GetRowCount()));
+            res_spill->GetRowCount() > 2 ? ++nBadSpill_duplicate : ++nBadSpill_record;
 
             delete res_spill;
             continue;
@@ -69,14 +69,32 @@ int main(int argc, char* argv[])
         row_spill = res_spill->Next();          spill.KMAG = atoi(row_spill->GetField(0)); delete row_spill;
         delete res_spill;
 
+        //EventID range
+        sprintf(query, "SELECT MIN(eventID),MAX(eventID) FROM Event WHERE runID=%d AND spillID=%d", runID, spill.spillID);
+        res_spill = server->Query(query);
+        if(res_spill->GetRowCount() != 1)
+        {
+            spill.log(Form("lacks event table entry %d", res_spill->GetRowCount()));
+            res_spill->GetRowCount() > 1 ? ++nBadSpill_duplicate : ++nBadSpill_record;
+
+            delete res_spill;
+            continue;
+        }
+
+        row_spill = res_spill->Next();
+        spill.eventID_min = atoi(row_spill->GetField(0));
+        spill.eventID_max = atoi(row_spill->GetField(1));
+        delete row_spill;
+        delete res_spill;
+
         //target position
         sprintf(query, "SELECT a.targetPos,b.value,a.dataQuality,a.liveProton FROM Spill AS a,Target AS b WHERE a.spillID"
             "=%d AND b.spillID=%d AND b.name='TARGPOS_CONTROL'", spill.spillID, spill.spillID);
         res_spill = server->Query(query);
         if(res_spill->GetRowCount() != 1)
         {
-            ++nBadSpill_record;
             spill.log(Form("lacks target position info %d", res_spill->GetRowCount()));
+            res_spill->GetRowCount() > 1 ? ++nBadSpill_duplicate : ++nBadSpill_record;
 
             delete res_spill;
             continue;
@@ -97,8 +115,8 @@ int main(int argc, char* argv[])
         res_spill = server->Query(query);
         if(res_spill->GetRowCount() != 1)
         {
-            ++nBadSpill_record;
             spill.log(Form("lacks reconstructed tables %d", res_spill->GetRowCount()));
+            res_spill->GetRowCount() > 1 ? ++nBadSpill_duplicate : ++nBadSpill_record;
 
             delete res_spill;
             continue;
@@ -118,8 +136,8 @@ int main(int argc, char* argv[])
         res_spill = server->Query(query);
         if(res_spill->GetRowCount() != 1)
         {
-            ++nBadSpill_record;
             spill.log(Form("lacks Beam/BeamDAQ info %d", res_spill->GetRowCount()));
+            res_spill->GetRowCount() > 1 ? ++nBadSpill_duplicate : ++nBadSpill_record;
 
             delete res_spill;
             continue;
@@ -142,8 +160,8 @@ int main(int argc, char* argv[])
         res_spill = server->Query(query);
         if(res_spill->GetRowCount() != 3)
         {
-            ++nBadSpill_record;
             spill.log(Form("lacks scaler info %d", res_spill->GetRowCount()));
+            res_spill->GetRowCount() > 3 ? ++nBadSpill_duplicate : ++nBadSpill_record;
 
             delete res_spill;
             continue;
@@ -186,7 +204,8 @@ int main(int argc, char* argv[])
     delete res;
 
     cout << "sqlSpillReader finished successfully." << endl;
-    cout << nGoodSpill << " good spills, " << nBadSpill_record << " spills have insufficient info in database, " << nBadSpill_quality << " rejected because of bad quality." << endl;
+    cout << saveTree->GetEntries() << " good spills, " << nBadSpill_record << " spills have insufficient info in database, "
+         << nBadSpill_duplicate << " spills have duplicate entries in database, " << nBadSpill_quality << " rejected because of bad quality." << endl;
 
     saveFile->cd();
     saveTree->Write();
