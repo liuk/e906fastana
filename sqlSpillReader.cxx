@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
     sprintf(query, "SELECT runID,spillID FROM Spill ORDER BY spillID");
 
     TSQLResult* res = server->Query(query);
-    int nSpillsRow = 100;//res->GetRowCount();
+    int nSpillsRow = res->GetRowCount();
 
     int nBadSpill_record = 0;
     int nBadSpill_duplicate = 0;
