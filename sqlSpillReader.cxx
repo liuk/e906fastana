@@ -13,11 +13,35 @@
 
 using namespace std;
 
+Spill* gSpill;
+
+int getInt(const char* row)
+{
+    if(row == NULL)
+    {
+        gSpill->log("Integer content is missing.");
+        return -9999;
+    }
+    return atoi(row);
+}
+
+float getFloat(const char* row)
+{
+    if(row == NULL)
+    {
+        gSpill->log("Floating content is missing.");
+        return -9999.;
+    }
+    return atof(row);
+}
+
 int main(int argc, char* argv[])
 {
     // define the output file structure
     Spill* p_spill = new Spill; Spill& spill = *p_spill;
     spill.skipflag = false;
+
+    gSpill = p_spill;
 
     TFile* saveFile = new TFile(argv[2], "recreate");
     TTree* saveTree = new TTree("save", "save");
@@ -25,7 +49,7 @@ int main(int argc, char* argv[])
     saveTree->Branch("spill", &p_spill, 256000, 99);
 
     //Connect to server
-    TSQLServer* server = TSQLServer::Connect(Form("mysql://%s:%d", argv[3], atoi(argv[4])), "seaguest", "qqbar2mu+mu-");
+    TSQLServer* server = TSQLServer::Connect(Form("mysql://%s:%d", argv[3], getInt(argv[4])), "seaguest", "qqbar2mu+mu-");
     server->Exec(Form("USE %s", argv[1]));
     cout << "Reading schema " << argv[1] << " and save to " << argv[2] << endl;
 
@@ -48,8 +72,8 @@ int main(int argc, char* argv[])
 
         //basic spillID info
         TSQLRow* row = res->Next();
-        int runID = atoi(row->GetField(0));
-        spill.spillID = atoi(row->GetField(1));
+        int runID = getInt(row->GetField(0));
+        spill.spillID = getInt(row->GetField(1));
         spill.trigSet = spill.triggerSet();
         delete row;
 
@@ -65,8 +89,8 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        TSQLRow* row_spill = res_spill->Next(); spill.FMAG = atof(row_spill->GetField(0)); delete row_spill;
-        row_spill = res_spill->Next();          spill.KMAG = atoi(row_spill->GetField(0)); delete row_spill;
+        TSQLRow* row_spill = res_spill->Next(); spill.FMAG = getFloat(row_spill->GetField(0)); delete row_spill;
+        row_spill = res_spill->Next();          spill.KMAG = getInt(row_spill->GetField(0)); delete row_spill;
         delete res_spill;
 
         //EventID range
@@ -82,8 +106,8 @@ int main(int argc, char* argv[])
         }
 
         row_spill = res_spill->Next();
-        spill.eventID_min = atoi(row_spill->GetField(0));
-        spill.eventID_max = atoi(row_spill->GetField(1));
+        spill.eventID_min = getInt(row_spill->GetField(0));
+        spill.eventID_max = getInt(row_spill->GetField(1));
         delete row_spill;
         delete res_spill;
 
@@ -101,10 +125,10 @@ int main(int argc, char* argv[])
         }
 
         row_spill = res_spill->Next();
-        spill.targetPos       = atoi(row_spill->GetField(0));
-        spill.TARGPOS_CONTROL = atoi(row_spill->GetField(1));
-        spill.quality         = atoi(row_spill->GetField(2));
-        spill.liveProton      = row_spill->GetField(3) == NULL ? -1. : atof(row_spill->GetField(3));
+        spill.targetPos       = getInt(row_spill->GetField(0));
+        spill.TARGPOS_CONTROL = getInt(row_spill->GetField(1));
+        spill.quality         = getInt(row_spill->GetField(2));
+        spill.liveProton      = row_spill->GetField(3) == NULL ? -1. : getFloat(row_spill->GetField(3));
         delete row_spill;
         delete res_spill;
 
@@ -123,9 +147,9 @@ int main(int argc, char* argv[])
         }
 
         row_spill = res_spill->Next();
-        spill.nEvents = atoi(row_spill->GetField(0));
-        spill.nDimuons = atoi(row_spill->GetField(1));
-        spill.nTracks = atoi(row_spill->GetField(2));
+        spill.nEvents = getInt(row_spill->GetField(0));
+        spill.nDimuons = getInt(row_spill->GetField(1));
+        spill.nTracks = getInt(row_spill->GetField(2));
         delete row_spill;
         delete res_spill;
 
@@ -144,12 +168,12 @@ int main(int argc, char* argv[])
         }
 
         row_spill = res_spill->Next();
-        spill.G2SEM      = atof(row_spill->GetField(0));
-        spill.NM3ION     = atof(row_spill->GetField(1));
-        spill.QIESum     = atof(row_spill->GetField(2));
-        spill.inhibitSum = atof(row_spill->GetField(3));
-        spill.busySum    = atof(row_spill->GetField(4));
-        spill.dutyFactor = atof(row_spill->GetField(5));
+        spill.G2SEM      = getFloat(row_spill->GetField(0));
+        spill.NM3ION     = getFloat(row_spill->GetField(1));
+        spill.QIESum     = getFloat(row_spill->GetField(2));
+        spill.inhibitSum = getFloat(row_spill->GetField(3));
+        spill.busySum    = getFloat(row_spill->GetField(4));
+        spill.dutyFactor = getFloat(row_spill->GetField(5));
 
         delete row_spill;
         delete res_spill;
@@ -167,9 +191,9 @@ int main(int argc, char* argv[])
             continue;
         }
 
-        row_spill = res_spill->Next(); spill.acceptedMatrix1 = atof(row_spill->GetField(0)); delete row_spill;
-        row_spill = res_spill->Next(); spill.afterInhMatrix1 = atof(row_spill->GetField(0)); delete row_spill;
-        row_spill = res_spill->Next(); spill.TSGo            = atof(row_spill->GetField(0)); delete row_spill;
+        row_spill = res_spill->Next(); spill.acceptedMatrix1 = getFloat(row_spill->GetField(0)); delete row_spill;
+        row_spill = res_spill->Next(); spill.afterInhMatrix1 = getFloat(row_spill->GetField(0)); delete row_spill;
+        row_spill = res_spill->Next(); spill.TSGo            = getFloat(row_spill->GetField(0)); delete row_spill;
         delete res_spill;
 
         //Scalar table -- BOS
@@ -185,9 +209,9 @@ int main(int argc, char* argv[])
         }
         else
         {
-            row_spill = res_spill->Next(); spill.acceptedMatrix1BOS = atof(row_spill->GetField(0)); delete row_spill;
-            row_spill = res_spill->Next(); spill.afterInhMatrix1BOS = atof(row_spill->GetField(0)); delete row_spill;
-            row_spill = res_spill->Next(); spill.TSGoBOS            = atof(row_spill->GetField(0)); delete row_spill;
+            row_spill = res_spill->Next(); spill.acceptedMatrix1BOS = getFloat(row_spill->GetField(0)); delete row_spill;
+            row_spill = res_spill->Next(); spill.afterInhMatrix1BOS = getFloat(row_spill->GetField(0)); delete row_spill;
+            row_spill = res_spill->Next(); spill.TSGoBOS            = getFloat(row_spill->GetField(0)); delete row_spill;
         }
         delete res_spill;
 
