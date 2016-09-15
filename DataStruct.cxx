@@ -207,10 +207,9 @@ bool Spill::goodReco()
 int Spill::triggerSet()
 {
     if(spillID >= 303215 && spillID <= 310954) return -1;           //bad QIE range
-    if(spillID >= 371870 && spillID <= 376533) return -1;           //timing shift in #59
-    if(spillID >= 378366 && spillID <= 379333) return -1;           //timing shift in #59
-    if(spillID >= 416207 && spillID <= 424180) return -1;           //manual target movement in #62
     if(spillID >= SPILLID_MIN_62 && spillID <= 409540) return -1;   //unstable trigger timing in #62
+    if(spillID >= 526201 && spillID <= 526364) return -1;           //bad QIE timing in 67
+    if(spillID >= 581369 && spillID <= 582460) return -1;           //KMag off in #67
     if(spillID >= SPILLID_MIN_57 && spillID <= SPILLID_MAX_57) return 57;
     if(spillID >= SPILLID_MIN_59 && spillID <= SPILLID_MAX_59) return 59;
     if(spillID >= SPILLID_MIN_61 && spillID <= SPILLID_MAX_61) return 61;
