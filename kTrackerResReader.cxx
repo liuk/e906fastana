@@ -16,34 +16,31 @@ using namespace std;
 int main(int argc, char* argv[])
 {
     //name of the TTree
-    TString treename = argv[3];
+    TString treename = argv[1];
+
+    //mode switches
+    bool mcdata = false;
+    bool mixdata = treename.Contains("mix") || treename.Contains("pp") || treename.Contains("mm");
+    bool exteventinfo = false;
 
     // input data structure
     SRecEvent* recEvent = new SRecEvent;
 
-    TFile* dataFile = new TFile(argv[1], "READ");
+    TFile* dataFile = new TFile(argv[2], "READ");
     TTree* dataTree = (TTree*)dataFile->Get(treename.Data());
-
     dataTree->SetBranchAddress("recEvent", &recEvent);
 
     //check if raw event exists
-    bool mcdata = false;
-    bool mixdata = treename.Contains("mix") || treename.Contains("pp") || treename.Contains("mm");
-    SRawEvent* rawEvent;
-    SRawMCEvent* rawMCEvent;
-    if(dataTree->FindBranch("rawEvent") != NULL)
+    mcdata = TString(dataTree->FindBranch("rawEvent")->GetClassName()) == "SRawMCEvent";
+    SRawEvent* rawEvent = mcdata ? (new SRawMCEvent) : (new SRawEvent);
+    dataTree->SetBranchAddress("rawEvent", &rawEvent);
+
+    //check if original event info exists, if not, read event input
+    SRawEvent* orgEvent = NULL;
+    if(dataTree->FindBranch("orgEvent") != NULL)
     {
-        if(TString(dataTree->FindBranch("rawEvent")->GetClassName()) == "SRawMCEvent")
-        {
-            rawMCEvent = new SRawMCEvent;
-            dataTree->SetBranchAddress("rawEvent", &rawMCEvent);
-            mcdata = true;
-        }
-        else
-        {
-            rawEvent = new SRawEvent;
-            dataTree->SetBranchAddress("rawEvent", &rawEvent);
-        }
+        orgEvent = mcdata ? (new SRawMCEvent) : (new SRawEvent);
+        dataTree->SetBranchAddress("orgEvent", &orgEvent);
     }
 
     // output data structure
@@ -53,7 +50,7 @@ int main(int argc, char* argv[])
     Track* p_posTrack = new Track; Track& posTrack = *p_posTrack;
     Track* p_negTrack = new Track; Track& negTrack = *p_negTrack;
 
-    TFile* saveFile = new TFile(argv[2], "recreate");
+    TFile* saveFile = new TFile(argv[3], "recreate");
     TTree* saveTree = new TTree("save", "save");
 
     saveTree->Branch("dimuon", &p_dimuon, 256000, 99);
@@ -65,24 +62,37 @@ int main(int argc, char* argv[])
     //Initialize spill information accordingly
     spill.skipflag = mcdata || mixdata;
     map<int, Spill> spillBank;
-    if(!spill.skipflag && argc > 4)
+    if(!spill.skipflag)
     {
         TFile* spillFile = new TFile(argv[4]);
         TTree* spillTree = (TTree*)spillFile->Get("save");
 
         spillTree->SetBranchAddress("spill", &p_spill);
-
         for(int i = 0; i < spillTree->GetEntries(); ++i)
         {
             spillTree->GetEntry(i);
-            spillBank.insert(map<int, Spill>::value_type(spill.spillID, spill));
+            if(spill.goodSpill()) spillBank.insert(map<int, Spill>::value_type(spill.spillID, spill));
+        }
+    }
+
+    //Initialize the event info bank
+    map<int, Event> eventBank;
+    if(orgEvent == NULL && argc > 5)
+    {
+        TFile* eventFile = new TFile(argv[5]);
+        TTree* eventTree = (TTree*)eventFile->Get("save");
+
+        eventTree->SetBranchAddress("event", &p_event);
+        for(int i = 0; i < eventTree->GetEntries(); ++i)
+        {
+            eventTree->GetEntry(i);
+            eventBank.insert(map<int, Event>::value_type(event.eventID, event));
         }
     }
 
     //start reading data
     int nDimuons = 0;
     double x_dummy, y_dummy, z_dummy;
-    bool badSpillFlag = false;
     for(int i = 0; i < dataTree->GetEntries(); ++i)
     {
         dataTree->GetEntry(i);
@@ -96,49 +106,69 @@ int main(int argc, char* argv[])
         event.spillID = recEvent->getSpillID();
         event.eventID = recEvent->getEventID();
         event.status = recEvent->getRecStatus();
+
+        //check spill valid first
+        if(!spill.skipflag && event.spillID != spill.spillID)
+        {
+            if(spillBank.find(event.spillID) == spillBank.end()) continue;
+            spill = spillBank[event.spillID];
+        }
+
+        //further event info
         if(mcdata)
         {
-            event.MATRIX1 = rawMCEvent->isEmuTriggered() ? 1 : -1;
-            event.weight = rawMCEvent->weight;
-            event.intensity[16] = 1.;
+            event.MATRIX1 = rawEvent->isEmuTriggered() ? 1 : -1;
+            event.weight = ((SRawMCEvent*)rawEvent)->weight;
+            for(int j = -16; j <= 16; ++j) event.intensity[j+16] = rawEvent->getIntensity(j);
+            if(orgEvent != NULL)
+            {
+                event.occupancy[0] = orgEvent->getNHitsInD1();
+                event.occupancy[1] = orgEvent->getNHitsInD2();
+                event.occupancy[2] = orgEvent->getNHitsInD3();
+                event.occupancy[3] = orgEvent->getNHitsInH1();
+                event.occupancy[4] = orgEvent->getNHitsInH2();
+                event.occupancy[5] = orgEvent->getNHitsInH3();
+                event.occupancy[6] = orgEvent->getNHitsInH4();
+                event.occupancy[7] = orgEvent->getNHitsInP1();
+                event.occupancy[8] = orgEvent->getNHitsInP2();
+            }
+            else
+            {
+                for(int j = 0; j < 9; ++j) event.occupancy[j] = 0;
+            }
+
         }
         else if(mixdata)
         {
             event.MATRIX1 = 1;
             event.weight = 1.;
-            event.intensity[16] = 1.;
+            event.sourceID1 = recEvent->getSourceID1();
+            event.sourceID2 = recEvent->getSourceID2();
+            for(int j = 0; j < 33; ++j) event.intensity[j] = eventBank[event.sourceID1].intensity[j] + eventBank[event.sourceID2].intensity[j];
+            for(int j = 0; j < 9; ++j) event.occupancy[j] = eventBank[event.sourceID1].occupancy[j] + eventBank[event.sourceID2].occupancy[j];
         }
         else
         {
             event.MATRIX1 = recEvent->isTriggeredBy(SRawEvent::MATRIX1) ? 1 : -1;
             event.weight = 1.;
             for(int j = -16; j <= 16; ++j) event.intensity[j+16] = rawEvent->getIntensity(j);
-        }
-
-        //spill level information
-        if(!spill.skipflag && event.spillID != spill.spillID)
-        {
-            badSpillFlag = false;
-            if(!spillBank.empty())
+            if(orgEvent != NULL)
             {
-                if(spillBank.find(recEvent->getSpillID()) == spillBank.end())
-                {
-                    event.log("spillID does not exist!");
-                    badSpillFlag = true;
-                }
-                else
-                {
-                    spill = spillBank[recEvent->getSpillID()];
-                }
+                event.occupancy[0] = orgEvent->getNHitsInD1();
+                event.occupancy[1] = orgEvent->getNHitsInD2();
+                event.occupancy[2] = orgEvent->getNHitsInD3();
+                event.occupancy[3] = orgEvent->getNHitsInH1();
+                event.occupancy[4] = orgEvent->getNHitsInH2();
+                event.occupancy[5] = orgEvent->getNHitsInH3();
+                event.occupancy[6] = orgEvent->getNHitsInH4();
+                event.occupancy[7] = orgEvent->getNHitsInP1();
+                event.occupancy[8] = orgEvent->getNHitsInP2();
+            }
+            else
+            {
+                for(int j = 0; j < 9; ++j) event.occupancy[j] = eventBank[event.eventID].occupancy[j];
             }
         }
-        else
-        {
-            spill.spillID = recEvent->getSpillID();
-            spill.targetPos = recEvent->getTargetPos();
-            spill.TARGPOS_CONTROL = recEvent->getTargetPos();
-        }
-        if(badSpillFlag) continue;
 
         for(int j = 0; j < recEvent->getNDimuons(); ++j)
         {
@@ -185,6 +215,7 @@ int main(int argc, char* argv[])
             posTrack.nHitsSt3  = recPosTrack.getNHitsInStation(3);
             posTrack.nHitsSt4H = recPosTrack.getNHitsInPTY();
             posTrack.nHitsSt4V = recPosTrack.getNHitsInPTX();
+            posTrack.kmstatus  = recPosTrack.isKalmanFitted();
             posTrack.chisq        = recPosTrack.getChisq();
             posTrack.chisq_dump   = recPosTrack.getChisqDump();
             posTrack.chisq_target = recPosTrack.getChisqTarget();
@@ -241,6 +272,7 @@ int main(int argc, char* argv[])
             negTrack.nHitsSt3  = recNegTrack.getNHitsInStation(3);
             negTrack.nHitsSt4H = recNegTrack.getNHitsInPTY();
             negTrack.nHitsSt4V = recNegTrack.getNHitsInPTX();
+            negTrack.kmstatus  = recNegTrack.isKalmanFitted();
             negTrack.chisq        = recNegTrack.getChisq();
             negTrack.chisq_dump   = recNegTrack.getChisqDump();
             negTrack.chisq_target = recNegTrack.getChisqTarget();
