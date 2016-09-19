@@ -16,7 +16,7 @@ using namespace std;
 int main(int argc, char* argv[])
 {
     //name of the TTree
-    TString treename = argv[1];
+    TString treename = argv[3];
 
     //mode switches
     bool mcdata = false;
@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
     // input data structure
     SRecEvent* recEvent = new SRecEvent;
 
-    TFile* dataFile = new TFile(argv[2], "READ");
+    TFile* dataFile = new TFile(argv[1], "READ");
     TTree* dataTree = (TTree*)dataFile->Get(treename.Data());
     dataTree->SetBranchAddress("recEvent", &recEvent);
 
@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
     Track* p_posTrack = new Track; Track& posTrack = *p_posTrack;
     Track* p_negTrack = new Track; Track& negTrack = *p_negTrack;
 
-    TFile* saveFile = new TFile(argv[3], "recreate");
+    TFile* saveFile = new TFile(argv[2], "recreate");
     TTree* saveTree = new TTree("save", "save");
 
     saveTree->Branch("dimuon", &p_dimuon, 256000, 99);
@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
         TFile* eventFile = new TFile(argv[5]);
         TTree* eventTree = (TTree*)eventFile->Get("save");
 
-        eventTree->SetBranchAddress("event", &p_event);
+        eventTree->SetBranchAddress("Event", &p_event);
         for(int i = 0; i < eventTree->GetEntries(); ++i)
         {
             eventTree->GetEntry(i);
@@ -136,7 +136,6 @@ int main(int argc, char* argv[])
             {
                 for(int j = 0; j < 9; ++j) event.occupancy[j] = 0;
             }
-
         }
         else if(mixdata)
         {
@@ -145,7 +144,7 @@ int main(int argc, char* argv[])
             event.sourceID1 = recEvent->getSourceID1();
             event.sourceID2 = recEvent->getSourceID2();
             for(int j = 0; j < 33; ++j) event.intensity[j] = eventBank[event.sourceID1].intensity[j] + eventBank[event.sourceID2].intensity[j];
-            for(int j = 0; j < 9; ++j) event.occupancy[j] = eventBank[event.sourceID1].occupancy[j] + eventBank[event.sourceID2].occupancy[j];
+            for(int j = 0; j < 9; ++j)  event.occupancy[j] = eventBank[event.sourceID1].occupancy[j] + eventBank[event.sourceID2].occupancy[j];
         }
         else
         {
@@ -265,7 +264,7 @@ int main(int argc, char* argv[])
 
             SRecTrack recNegTrack = recEvent->getTrack(dimuon.negTrackID);
             negTrack.trackID   = recDimuon.trackID_neg;
-            negTrack.charge    = 1;
+            negTrack.charge    = -1;
             negTrack.nHits     = recNegTrack.getNHits();
             negTrack.nHitsSt1  = recNegTrack.getNHitsInStation(1);
             negTrack.nHitsSt2  = recNegTrack.getNHitsInStation(2);
