@@ -31,9 +31,13 @@ int main(int argc, char* argv[])
     dataTree->SetBranchAddress("recEvent", &recEvent);
 
     //check if raw event exists
-    mcdata = TString(dataTree->FindBranch("rawEvent")->GetClassName()) == "SRawMCEvent";
-    SRawEvent* rawEvent = mcdata ? (new SRawMCEvent) : (new SRawEvent);
-    dataTree->SetBranchAddress("rawEvent", &rawEvent);
+    SRawEvent* rawEvent = NULL;
+    if(dataTree->FindBranch("rawEvent") != NULL)
+    {
+        mcdata = TString(dataTree->FindBranch("rawEvent")->GetClassName()) == "SRawMCEvent";
+        rawEvent = mcdata ? (new SRawMCEvent) : (new SRawEvent);
+        dataTree->SetBranchAddress("rawEvent", &rawEvent);
+    }
 
     //check if original event info exists, if not, read event input
     SRawEvent* orgEvent = NULL;
@@ -119,9 +123,9 @@ int main(int argc, char* argv[])
         {
             event.MATRIX1 = rawEvent->isEmuTriggered() ? 1 : -1;
             event.weight = ((SRawMCEvent*)rawEvent)->weight;
-            for(int j = -16; j <= 16; ++j) event.intensity[j+16] = rawEvent->getIntensity(j);
             if(orgEvent != NULL)
             {
+                for(int j = -16; j <= 16; ++j) event.intensity[j+16] = rawEvent->getIntensity(j);
                 event.occupancy[0] = orgEvent->getNHitsInD1();
                 event.occupancy[1] = orgEvent->getNHitsInD2();
                 event.occupancy[2] = orgEvent->getNHitsInD3();
@@ -143,6 +147,7 @@ int main(int argc, char* argv[])
             event.weight = 1.;
             event.sourceID1 = recEvent->getSourceID1();
             event.sourceID2 = recEvent->getSourceID2();
+            if(eventBank.find(event.sourceID1) == eventBank.end() || eventBank.find(event.sourceID2) == eventBank.end()) continue;
             for(int j = 0; j < 33; ++j) event.intensity[j] = eventBank[event.sourceID1].intensity[j] + eventBank[event.sourceID2].intensity[j];
             for(int j = 0; j < 9; ++j)  event.occupancy[j] = eventBank[event.sourceID1].occupancy[j] + eventBank[event.sourceID2].occupancy[j];
         }
@@ -150,9 +155,9 @@ int main(int argc, char* argv[])
         {
             event.MATRIX1 = recEvent->isTriggeredBy(SRawEvent::MATRIX1) ? 1 : -1;
             event.weight = 1.;
-            for(int j = -16; j <= 16; ++j) event.intensity[j+16] = rawEvent->getIntensity(j);
             if(orgEvent != NULL)
             {
+                for(int j = -16; j <= 16; ++j) event.intensity[j+16] = rawEvent->getIntensity(j);
                 event.occupancy[0] = orgEvent->getNHitsInD1();
                 event.occupancy[1] = orgEvent->getNHitsInD2();
                 event.occupancy[2] = orgEvent->getNHitsInD3();
@@ -165,7 +170,8 @@ int main(int argc, char* argv[])
             }
             else
             {
-                for(int j = 0; j < 9; ++j) event.occupancy[j] = eventBank[event.eventID].occupancy[j];
+                for(int j = 0; j < 33; ++j) event.intensity[j] = eventBank[event.eventID].intensity[j];
+                for(int j = 0; j < 9; ++j)  event.occupancy[j] = eventBank[event.eventID].occupancy[j];
             }
         }
 
