@@ -83,9 +83,14 @@ int main(int argc, char* argv[])
     map<int, Event> eventBank;
     if(orgEvent == NULL && argc > 5)
     {
-        TFile* eventFile = new TFile(argv[5]);
-        TTree* eventTree = (TTree*)eventFile->Get("save");
+        TFile* eventFile = TFile::Open(argv[5]);
+        if(eventFile == 0x0)
+        {
+            cout << "No good spill in this run!" << endl;
+            exit(EXIT_SUCCESS);
+        }
 
+        TTree* eventTree = (TTree*)eventFile->Get("save");
         eventTree->SetBranchAddress("Event", &p_event);
         for(int i = 0; i < eventTree->GetEntries(); ++i)
         {
