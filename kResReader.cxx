@@ -20,8 +20,8 @@ int main(int argc, char* argv[])
 
     //mode switches
     bool mcdata = false;
-    bool mixdata = treename.Contains("mix") || treename.Contains("pp") || treename.Contains("mm");
-    bool exteventinfo = false;
+    bool mixdata = treename.Contains("mix");
+    bool lsdata  = !mixdata && (treename.Contains("pp") || treename.Contains("mm"));
 
     // input data structure
     SRecEvent* recEvent = new SRecEvent;
