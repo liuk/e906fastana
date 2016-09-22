@@ -160,7 +160,7 @@ int main(int argc, char* argv[])
         {
             event.MATRIX1 = recEvent->isTriggeredBy(SRawEvent::MATRIX1) ? 1 : -1;
             event.weight = 1.;
-            if(orgEvent != NULL)
+            if(orgEvent != NULL && orgEvent->getEventID() == recEvent->getEventID()) //notice the short circuiting
             {
                 for(int j = -16; j <= 16; ++j) event.intensity[j+16] = rawEvent->getIntensity(j);
                 event.occupancy[0] = orgEvent->getNHitsInD1();
