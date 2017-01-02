@@ -15,108 +15,6 @@
 
 using namespace std;
 
-bool fillSpillInfo(Spill& spill, int runID, int spillID, TSQLServer* server)
-{
-    //run configuration
-    char query[2000];
-    sprintf(query, "SELECT value FROM Run WHERE runID=%d AND name IN ('KMAG-Avg','MATRIX3Prescale') ORDER BY name", runID);
-    TSQLResult* res_spill = server->Query(query);
-    if(res_spill->GetRowCount() != 2)
-    {
-        spill.log("lacks Run table info");
-
-        delete res_spill;
-        return false;
-    }
-
-    TSQLRow* row_spill = res_spill->Next();  spill.KMAG = atof(row_spill->GetField(0)); delete row_spill;
-    row_spill = res_spill->Next(); spill.MATRIX3Prescale = atoi(row_spill->GetField(0)); delete row_spill;
-    delete res_spill;
-
-    //target position
-    sprintf(query, "SELECT a.targetPos,b.value,a.dataQuality,a.liveProton FROM Spill AS a,Target AS b WHERE a.spillID"
-        "=%d AND b.spillID=%d AND b.name='TARGPOS_CONTROL' AND a.liveProton IS NOT NULL", spillID, spillID);
-    res_spill = server->Query(query);
-    if(res_spill->GetRowCount() != 1)
-    {
-        spill.log("lacks target position info");
-
-        delete res_spill;
-        return false;
-    }
-
-    row_spill = res_spill->Next();
-    spill.targetPos       = atoi(row_spill->GetField(0));
-    spill.TARGPOS_CONTROL = atoi(row_spill->GetField(1));
-    spill.quality         = atoi(row_spill->GetField(2));
-    spill.liveProton      = atof(row_spill->GetField(3));
-    delete row_spill;
-    delete res_spill;
-
-    //Reconstruction info
-    sprintf(query, "SELECT (SELECT COUNT(*) FROM Event WHERE spillID=%d),"
-                          "(SELECT COUNT(*) FROM kDimuon WHERE spillID=%d),"
-                          "(SELECT COUNT(*) FROM kTrack WHERE spillID=%d)", spillID, spillID, spillID);
-    res_spill = server->Query(query);
-    if(res_spill->GetRowCount() != 1)
-    {
-        spill.log("lacks reconstructed tables");
-
-        delete res_spill;
-        return false;
-    }
-
-    row_spill = res_spill->Next();
-    spill.nEvents = atoi(row_spill->GetField(0));
-    spill.nDimuons = atoi(row_spill->GetField(1));
-    spill.nTracks = atoi(row_spill->GetField(2));
-    delete row_spill;
-    delete res_spill;
-
-    //Beam/BeamDAQ
-    sprintf(query, "SELECT a.value,b.NM3ION,b.QIESum,b.inhibit_block_sum,b.trigger_sum_no_inhibit,"
-        "b.dutyFactor53MHz FROM Beam AS a,BeamDAQ AS b WHERE a.spillID=%d AND b.spillID=%d AND "
-        "a.name='S:G2SEM'", spillID, spillID);
-    res_spill = server->Query(query);
-    if(res_spill->GetRowCount() != 1)
-    {
-        spill.log("lacks Beam/BeamDAQ info");
-
-        delete res_spill;
-        return false;
-    }
-
-    row_spill = res_spill->Next();
-    spill.G2SEM      = atof(row_spill->GetField(0));
-    spill.NM3ION     = atof(row_spill->GetField(1));
-    spill.QIESum     = atof(row_spill->GetField(2));
-    spill.inhibitSum = atof(row_spill->GetField(3));
-    spill.busySum    = atof(row_spill->GetField(4));
-    spill.dutyFactor = atof(row_spill->GetField(5));
-
-    delete row_spill;
-    delete res_spill;
-
-    //Scalar table
-    sprintf(query, "SELECT value FROM Scaler WHERE spillType='EOS' AND spillID=%d AND scalerName "
-        "in ('TSGo','AcceptedMatrix1','AfterInhMatrix1') ORDER BY scalerName", spillID);
-    res_spill = server->Query(query);
-    if(res_spill->GetRowCount() != 3)
-    {
-        spill.log("lacks scaler info");
-
-        delete res_spill;
-        return false;
-    }
-
-    row_spill = res_spill->Next(); spill.acceptedMatrix1 = atof(row_spill->GetField(0)); delete row_spill;
-    row_spill = res_spill->Next(); spill.afterInhMatrix1 = atof(row_spill->GetField(0)); delete row_spill;
-    row_spill = res_spill->Next(); spill.TSGo            = atof(row_spill->GetField(0)); delete row_spill;
-    delete res_spill;
-
-    return true;
-}
-
 int main(int argc, char* argv[])
 {
     // define the output file structure
@@ -135,8 +33,6 @@ int main(int argc, char* argv[])
     saveTree->Branch("posTrack", &p_posTrack, 256000, 99);
     saveTree->Branch("negTrack", &p_negTrack, 256000, 99);
 
-    TTree* spillTree = new TTree("spill", "spill");
-    spillTree->Branch("spill", &p_spill, 256000, 99);
 
     //Connect to server
     TSQLServer* server = TSQLServer::Connect(Form("mysql://%s:%d", argv[3], atoi(argv[4])), "seaguest", "qqbar2mu+mu-");
