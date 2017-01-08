@@ -25,8 +25,9 @@ public:
     int MATRIX1;
     float weight;
     float intensity[33];
+    float intensityP;
 
-    ClassDef(Event, 4)
+    ClassDef(Event, 5)
 };
 
 class Dimuon : public TObject
