@@ -28,9 +28,8 @@ int main(int argc, char* argv[])
     dataTree->SetBranchAddress("event", &p_event);
 
     map<int, vector<int> > eventIDlist;
-
-    int runIDmin = atoi(argv[6]);
-    int runIDmax = atoi(argv[7]);
+    int runIDmin = argc > 6 ? atoi(argv[6]) : -1;
+    int runIDmax = argc > 6 ? atoi(argv[7]) : 999999;
     for(int i = 0; i < dataTree->GetEntries(); ++i)
     {
         dataTree->GetEntry(i);

@@ -53,14 +53,16 @@ int main(int argc, char* argv[])
     TFile* saveFile = new TFile(argv[3], "recreate");
     TTree* saveTree = dataTree->CloneTree(0, "fast");
 
-    Event* p_eventNew = new Event; Event& eventNew = *p_eventNew;
-
-    saveTree->Branch("eventNew", &p_eventNew, 256000, 99);
+    //The logic here is, if there is another cmd-line arg (whatever it is), program will try to update
+    // the original event branch instead of adding a new one
+    bool update = argc > 4;
+    Event* p_eventNew = new Event; Event& eventNew = update ? *p_event : *p_eventNew;
+    if(!update) saveTree->Branch("eventNew", &p_eventNew, 256000, 99);
 
     for(int i = 0; i < dataTree->GetEntries(); ++i)
     {
         dataTree->GetEntry(i);
-        eventNew = event;
+        if(!update) eventNew = event;
 
         //cout << i << "  " << "  " << event.runID << "  " << event.eventID << endl;
         if(eventInfo.find(make_pair(event.runID, event.eventID)) != eventInfo.end())
