@@ -63,26 +63,21 @@ int main(int argc, char* argv[])
     saveTree->Branch("negTrack", &p_negTrack, 256000, 99);
 
     //Initialize spill information accordingly
-    spill.skipflag = mcdata || mixdata;
     map<int, Spill> spillBank;
-    if(!spill.skipflag && argc > 4)
+    TFile* spillFile = new TFile(argv[4]);
+    TTree* spillTree = (TTree*)spillFile->Get("save");
+
+    spillTree->SetBranchAddress("spill", &p_spill);
+
+    for(int i = 0; i < spillTree->GetEntries(); ++i)
     {
-        TFile* spillFile = new TFile(argv[4]);
-        TTree* spillTree = (TTree*)spillFile->Get("save");
-
-        spillTree->SetBranchAddress("spill", &p_spill);
-
-        for(int i = 0; i < spillTree->GetEntries(); ++i)
-        {
-            spillTree->GetEntry(i);
-            spillBank.insert(map<int, Spill>::value_type(spill.spillID, spill));
-        }
+        spillTree->GetEntry(i);
+        spillBank.insert(map<int, Spill>::value_type(spill.spillID, spill));
     }
 
     //start reading data
     int nDimuons = 0;
     double x_dummy, y_dummy, z_dummy;
-    bool badSpillFlag = false;
     for(int i = 0; i < dataTree->GetEntries(); ++i)
     {
         dataTree->GetEntry(i);
@@ -96,35 +91,20 @@ int main(int argc, char* argv[])
         event.spillID = recEvent->getSpillID();
         event.eventID = recEvent->getEventID();
         event.status = recEvent->getRecStatus();
-        if(mcdata)
-        {
-            event.MATRIX1 = rawMCEvent->isEmuTriggered() ? 1 : -1;
-            event.weight = rawMCEvent->weight;
-            event.intensity[16] = 1.;
-        }
-        else if(mixdata)
-        {
-            event.MATRIX1 = 1;
-            event.weight = 1.;
-            event.intensity[16] = 1.;
-        }
-        else
-        {
-            event.MATRIX1 = recEvent->isTriggeredBy(SRawEvent::MATRIX1) ? 1 : -1;
-            event.weight = 1.;
-            for(int j = -16; j <= 16; ++j) event.intensity[j+16] = rawEvent->getIntensity(j);
-        }
+
+        event.MATRIX1 = rawMCEvent->isEmuTriggered() ? 1 : -1;
+        event.weight = rawMCEvent->weight;
+        event.intensityP = 0.;
+        for(int j = -16; j <= 16; ++j) event.intensity[j+16] = rawMCEvent->getIntensity(j);
 
         //spill level information
-        if(!spill.skipflag && event.spillID != spill.spillID)
+        if(event.spillID != spill.spillID)
         {
-            badSpillFlag = false;
             if(!spillBank.empty())
             {
                 if(spillBank.find(recEvent->getSpillID()) == spillBank.end())
                 {
                     event.log("spillID does not exist!");
-                    badSpillFlag = true;
                 }
                 else
                 {
@@ -138,7 +118,6 @@ int main(int argc, char* argv[])
             spill.targetPos = recEvent->getTargetPos();
             spill.TARGPOS_CONTROL = recEvent->getTargetPos();
         }
-        if(badSpillFlag) continue;
 
         for(int j = 0; j < recEvent->getNDimuons(); ++j)
         {
