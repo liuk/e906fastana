@@ -29,7 +29,7 @@ bool Event::goodEvent()
     return MATRIX1 > 0 && status == 0;
 }
 
-float Event::weightedIntensity(float unit)
+float Event::weightedIntensity(float unit, float ped)
 {
     double weight[] = {0.000814246430361413, 0.0028662467149288, 0.00597015326639906, 0.0121262946061061,
                        0.0300863195179747, 0.0777262437180552, 0.159446650644417, 0.259932709364831,
@@ -43,11 +43,11 @@ float Event::weightedIntensity(float unit)
     double wsum = 0.;
     for(int i = -13; i <= 13; ++i)
     {
-        sum += (weight[i+13]*(intensity[i+16] - PEDESTAL*unit));
+        sum += (weight[i+13]*intensity[i+16]);
         wsum += weight[i+13];
     }
 
-    return sum/wsum;
+    return (sum/wsum - ped)*unit;
 }
 
 bool Dimuon::goodDimuon(int polarity)
@@ -83,7 +83,8 @@ Spill::Spill() : spillID(-1), quality(-1), targetPos(-1), TARGPOS_CONTROL(-1), n
 
 bool Spill::goodSpill()
 {
-    return skipflag || (goodTargetPos() && goodScaler() && goodBeam() && goodBeamDAQ() && goodMagnet() && goodReco());
+    //return skipflag || (goodTargetPos() && goodScaler() && goodBeam() && goodBeamDAQ() && goodMagnet() && goodReco());
+    return skipflag || (quality == 0);
 }
 
 bool Spill::goodTargetPos()
@@ -221,7 +222,23 @@ int Spill::triggerSet()
 
 float Spill::QIEUnit()
 {
-    return G2SEM/(QIESum - 588*360000*PEDESTAL);
+    return G2SEM/(QIESum - 588*360000*pedestal());
+}
+
+float Spill::pedestal()
+{
+    if(spillID >= 448470)
+    {
+        return 32.37;
+    }
+    else if(spillID <= 448017)
+    {
+        return 36.32;
+    }
+    else
+    {
+        return 34.35;
+    }
 }
 
 float Spill::liveG2SEM()

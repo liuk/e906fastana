@@ -53,11 +53,9 @@ int main(int argc, char* argv[])
     server->Exec(Form("USE %s", argv[1]));
     cout << "Reading schema " << argv[1] << " and save to " << argv[2] << endl;
 
-    char query[5000];
-    //sprintf(query, "SELECT spillID FROM Spill WHERE runID in (SELECT run FROM summary.production WHERE ktracked=1) ORDER BY spillID");
-    sprintf(query, "SELECT runID,spillID FROM Spill ORDER BY spillID");
+    TString query = "SELECT runID,spillID FROM Spill ORDER BY spillID";
 
-    TSQLResult* res = server->Query(query);
+    TSQLResult* res = server->Query(query.Data());
     int nSpillsRow = res->GetRowCount();
 
     int nBadSpill_record = 0;
@@ -78,8 +76,8 @@ int main(int argc, char* argv[])
         delete row;
 
         //magnet configuration
-        sprintf(query, "SELECT value FROM Beam WHERE spillID=%d AND name IN ('F:NM3S','F:NM4AN') ORDER BY name", spill.spillID);
-        TSQLResult* res_spill = server->Query(query);
+        TString query = Form("SELECT value FROM Beam WHERE spillID=%d AND name IN ('F:NM3S','F:NM4AN') ORDER BY name", spill.spillID);
+        TSQLResult* res_spill = server->Query(query.Data());
         if(res_spill->GetRowCount() != 2)
         {
             spill.log(Form("lacks magnet info %d", res_spill->GetRowCount()));
@@ -94,8 +92,8 @@ int main(int argc, char* argv[])
         delete res_spill;
 
         //EventID range
-        sprintf(query, "SELECT MIN(eventID),MAX(eventID) FROM Event WHERE runID=%d AND spillID=%d", runID, spill.spillID);
-        res_spill = server->Query(query);
+        query = Form("SELECT MIN(eventID),MAX(eventID) FROM Event WHERE runID=%d AND spillID=%d", runID, spill.spillID);
+        res_spill = server->Query(query.Data());
         if(res_spill->GetRowCount() != 1)
         {
             spill.log(Form("lacks event table entry %d", res_spill->GetRowCount()));
@@ -112,9 +110,9 @@ int main(int argc, char* argv[])
         delete res_spill;
 
         //target position
-        sprintf(query, "SELECT a.targetPos,b.value,a.dataQuality,a.liveProton FROM Spill AS a,Target AS b WHERE a.spillID"
+        query = Form("SELECT a.targetPos,b.value,a.dataQuality,a.liveProton FROM Spill AS a,Target AS b WHERE a.spillID"
             "=%d AND b.spillID=%d AND b.name='TARGPOS_CONTROL'", spill.spillID, spill.spillID);
-        res_spill = server->Query(query);
+        res_spill = server->Query(query.Data());
         if(res_spill->GetRowCount() != 1)
         {
             spill.log(Form("lacks target position info %d", res_spill->GetRowCount()));
@@ -128,15 +126,14 @@ int main(int argc, char* argv[])
         spill.targetPos       = getInt(row_spill->GetField(0));
         spill.TARGPOS_CONTROL = getInt(row_spill->GetField(1));
         spill.quality         = getInt(row_spill->GetField(2));
-        spill.liveProton      = row_spill->GetField(3) == NULL ? -1. : getFloat(row_spill->GetField(3));
+        spill.liveProton      = getFloat(row_spill->GetField(3));
         delete row_spill;
         delete res_spill;
 
         //Reconstruction info
-        sprintf(query, "SELECT (SELECT COUNT(*) FROM Event WHERE spillID=%d),"
-                              "(SELECT COUNT(*) FROM kDimuon WHERE spillID=%d),"
-                              "(SELECT COUNT(*) FROM kTrack WHERE spillID=%d)", spill.spillID, spill.spillID, spill.spillID);
-        res_spill = server->Query(query);
+        query = Form("SELECT (SELECT COUNT(*) FROM Event WHERE spillID=%d),(SELECT COUNT(*) FROM kDimuon WHERE spillID=%d),"
+            "(SELECT COUNT(*) FROM kTrack WHERE spillID=%d)", spill.spillID, spill.spillID, spill.spillID);
+        res_spill = server->Query(query.Data());
         if(res_spill->GetRowCount() != 1)
         {
             spill.log(Form("lacks reconstructed tables %d", res_spill->GetRowCount()));
@@ -154,7 +151,7 @@ int main(int argc, char* argv[])
         delete res_spill;
 
         //Beam/BeamDAQ
-        sprintf(query, "SELECT a.value,b.NM3ION,b.QIESum,b.inhibit_block_sum,b.trigger_sum_no_inhibit,"
+        query = Form("SELECT a.value,b.NM3ION,b.QIESum,b.inhibit_block_sum,b.trigger_sum_no_inhibit,"
             "b.dutyFactor53MHz FROM Beam AS a,BeamDAQ AS b WHERE a.spillID=%d AND b.spillID=%d AND "
             "a.name='S:G2SEM'", spill.spillID, spill.spillID);
         res_spill = server->Query(query);
@@ -179,7 +176,7 @@ int main(int argc, char* argv[])
         delete res_spill;
 
         //Scalar table -- EOS
-        sprintf(query, "SELECT value FROM Scaler WHERE spillType='EOS' AND spillID=%d AND scalerName "
+        query = Form("SELECT value FROM Scaler WHERE spillType='EOS' AND spillID=%d AND scalerName "
             "in ('TSGo','AcceptedMatrix1','AfterInhMatrix1') ORDER BY scalerName", spill.spillID);
         res_spill = server->Query(query);
         if(res_spill->GetRowCount() != 3)
@@ -197,7 +194,7 @@ int main(int argc, char* argv[])
         delete res_spill;
 
         //Scalar table -- BOS
-        sprintf(query, "SELECT value FROM Scaler WHERE spillType='BOS' AND spillID=%d AND scalerName "
+        query = Form("SELECT value FROM Scaler WHERE spillType='BOS' AND spillID=%d AND scalerName "
             "in ('TSGo','AcceptedMatrix1','AfterInhMatrix1') ORDER BY scalerName", spill.spillID);
         res_spill = server->Query(query);
         if(res_spill->GetRowCount() != 3)

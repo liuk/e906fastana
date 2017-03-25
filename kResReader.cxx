@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
     //mode switches
     bool mcdata = false;
     bool mixdata = treename.Contains("mix");
-    bool lsdata  = !mixdata && (treename.Contains("pp") || treename.Contains("mm"));
+    bool lsdata  = treename.Contains("pp") || treename.Contains("mm");
 
     // input data structure
     SRecEvent* recEvent = new SRecEvent;
@@ -79,26 +79,6 @@ int main(int argc, char* argv[])
         }
     }
 
-    //Initialize the event info bank
-    map<int, Event> eventBank;
-    if(orgEvent == NULL && argc > 5)
-    {
-        TFile* eventFile = TFile::Open(argv[5]);
-        if(eventFile == 0x0)
-        {
-            cout << "No good spill in this run!" << endl;
-            exit(EXIT_SUCCESS);
-        }
-
-        TTree* eventTree = (TTree*)eventFile->Get("save");
-        eventTree->SetBranchAddress("Event", &p_event);
-        for(int i = 0; i < eventTree->GetEntries(); ++i)
-        {
-            eventTree->GetEntry(i);
-            eventBank.insert(map<int, Event>::value_type(event.eventID, event));
-        }
-    }
-
     //start reading data
     int nDimuons = 0;
     double x_dummy, y_dummy, z_dummy;
@@ -128,9 +108,13 @@ int main(int argc, char* argv[])
         {
             event.MATRIX1 = rawEvent->isEmuTriggered() ? 1 : -1;
             event.weight = ((SRawMCEvent*)rawEvent)->weight;
+            for(int j = -16; j <= 16; ++j) event.intensity[j+16] = rawEvent->getIntensity(j);
+            event.intensityP = 0.;
+            event.source1 = -1;
+            event.source2 = -1;
             if(orgEvent != NULL)
             {
-                for(int j = -16; j <= 16; ++j) event.intensity[j+16] = rawEvent->getIntensity(j);
+
                 event.occupancy[0] = orgEvent->getNHitsInD1();
                 event.occupancy[1] = orgEvent->getNHitsInD2();
                 event.occupancy[2] = orgEvent->getNHitsInD3();
@@ -146,20 +130,12 @@ int main(int argc, char* argv[])
                 for(int j = 0; j < 9; ++j) event.occupancy[j] = 0;
             }
         }
-        else if(mixdata)
-        {
-            event.MATRIX1 = 1;
-            event.weight = 1.;
-            event.sourceID1 = recEvent->getSourceID1();
-            event.sourceID2 = recEvent->getSourceID2();
-            if(eventBank.find(event.sourceID1) == eventBank.end() || eventBank.find(event.sourceID2) == eventBank.end()) continue;
-            for(int j = 0; j < 33; ++j) event.intensity[j] = eventBank[event.sourceID1].intensity[j] + eventBank[event.sourceID2].intensity[j];
-            for(int j = 0; j < 9; ++j)  event.occupancy[j] = eventBank[event.sourceID1].occupancy[j] + eventBank[event.sourceID2].occupancy[j];
-        }
         else
         {
             event.MATRIX1 = recEvent->isTriggeredBy(SRawEvent::MATRIX1) ? 1 : -1;
             event.weight = 1.;
+            event.source1 = -1;
+            event.source2 = -1;
             if(orgEvent != NULL && orgEvent->getEventID() == recEvent->getEventID()) //notice the short circuiting
             {
                 for(int j = -16; j <= 16; ++j) event.intensity[j+16] = rawEvent->getIntensity(j);
@@ -175,8 +151,8 @@ int main(int argc, char* argv[])
             }
             else
             {
-                for(int j = 0; j < 33; ++j) event.intensity[j] = eventBank[event.eventID].intensity[j];
-                for(int j = 0; j < 9; ++j)  event.occupancy[j] = eventBank[event.eventID].occupancy[j];
+                for(int j = 0; j < 33; ++j) event.intensity[j] = 0.;
+                for(int j = 0; j < 9; ++j)  event.occupancy[j] = 0;
             }
         }
 
@@ -211,7 +187,7 @@ int main(int argc, char* argv[])
             dimuon.trackSeparation = recDimuon.vtx_pos.Z() - recDimuon.vtx_neg.Z();
 
             //if(!dimuon.goodDimuon()) continue;
-            if(dimuon.mass < 0.5 || dimuon.mass > 10. || dimuon.chisq_dimuon > 25. || dimuon.x1 < 0. || dimuon.x1 > 1.
+            if(dimuon.mass < 0.5 || dimuon.mass > 10. || dimuon.chisq_dimuon > 50. || dimuon.x1 < 0. || dimuon.x1 > 1.
                || dimuon.x2 < 0. || dimuon.x2 > 1. || dimuon.xF < -1. || dimuon.xF > 1. || fabs(dimuon.dx) > 2.
                || fabs(dimuon.dy) > 2. || dimuon.dz < -300. || dimuon.dz > 300. || fabs(dimuon.dpx) > 3.
                || fabs(dimuon.dpy) > 3. || dimuon.dpz < 30. || dimuon.dpz > 120. || fabs(dimuon.trackSeparation) > 300.) continue;
@@ -269,6 +245,7 @@ int main(int argc, char* argv[])
             posTrack.tx_PT  = recPosTrack.getPTSlopeX();
             posTrack.ty_PT  = recPosTrack.getPTSlopeY();
             posTrack.thbend = atan(posTrack.px3/posTrack.pz3) - atan(posTrack.px1/posTrack.pz1);
+            posTrack.kmstatus = recPosTrack.getKalmanStatus();
             posTrack.pxv = recDimuon.p_pos.Px();
             posTrack.pyv = recDimuon.p_pos.Py();
             posTrack.pzv = recDimuon.p_pos.Pz();
@@ -326,6 +303,7 @@ int main(int argc, char* argv[])
             negTrack.tx_PT  = recNegTrack.getPTSlopeX();
             negTrack.ty_PT  = recNegTrack.getPTSlopeY();
             negTrack.thbend = atan(negTrack.px3/negTrack.pz3) - atan(negTrack.px1/negTrack.pz1);
+            negTrack.kmstatus = recNegTrack.getKalmanStatus();
             negTrack.pxv = recDimuon.p_neg.Px();
             negTrack.pyv = recDimuon.p_neg.Py();
             negTrack.pzv = recDimuon.p_neg.Pz();

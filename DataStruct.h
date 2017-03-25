@@ -7,14 +7,12 @@
 #include <TROOT.h>
 #include <TString.h>
 
-#define PEDESTAL 36.791
-
 class Event : public TObject
 {
 public:
     Event();
     bool goodEvent();
-    float weightedIntensity(float unit = 1.);
+    float weightedIntensity(float unit = 1., float ped = 0.);
 
     void log(TString info) { std::cout << "RunID " << runID << ", spillID " << spillID << ", eventID " << eventID << ": " << info << std::endl; }
 
@@ -29,8 +27,9 @@ public:
 
     int occupancy[9];      // 0 - 8 stands for D1 D2 D3 H1 H2 H3 H4 P1 P2
     float intensity[33];
+    float intensityP;
 
-    int sourceID1, sourceID2;  //source of the eventID for mixing
+    int source1, source2;  //source of the eventID for mixing
 
     ClassDef(Event, 5)
 };
@@ -72,6 +71,7 @@ public:
     void log(TString info) { std::cout << "SpillID " << spillID << ": " << info << std::endl; }
 
     float QIEUnit();
+    float pedestal();
     float liveG2SEM();
 
 public:
