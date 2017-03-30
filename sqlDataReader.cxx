@@ -152,6 +152,7 @@ int main(int argc, char* argv[])
             else
             {
                 spill = spillBank[event.spillID];
+                badSpillFlag = false;
             }
         }
         else
@@ -168,7 +169,7 @@ int main(int argc, char* argv[])
             TString query = Form("SELECT a.`RF-16`,a.`RF-15`,a.`RF-14`,a.`RF-13`,a.`RF-12`,a.`RF-11`,a.`RF-10`,a.`RF-09`,"
                 "a.`RF-08`,a.`RF-07`,a.`RF-06`,a.`RF-05`,a.`RF-04`,a.`RF-03`,a.`RF-02`,a.`RF-01`,a.`RF+00`,a.`RF+01`,"
                 "a.`RF+02`,a.`RF+03`,a.`RF+04`,a.`RF+05`,a.`RF+06`,a.`RF+07`,a.`RF+08`,a.`RF+09`,a.`RF+10`,a.`RF+11`,"
-                "a.`RF+12`,a.`RF+13`,a.`RF+14`,a.`RF+15`,a.`RF+16`,a.Intensity_p,d.D1,d.D2,d.D3,d.H1,d.H2,d.H3,d.H4,d.P1,d.P2"
+                "a.`RF+12`,a.`RF+13`,a.`RF+14`,a.`RF+15`,a.`RF+16`,a.Intensity_p,d.D1,d.D2,d.D3,d.H1,d.H2,d.H3,d.H4,d.P1,d.P2,"
                 "b.MATRIX1,c.status,c.source1,c.source2 FROM QIE AS a,Event AS b,kEvent AS c,Occupancy AS d WHERE a.runID=%d "
                 "AND a.eventID=%d AND b.runID=%d AND b.eventID=%d AND c.runID=%d AND c.eventID=%d AND d.runID=%d AND d.eventID=%d",
                 event.runID, event.eventID, event.runID, event.eventID, event.runID, event.eventID, event.runID, event.eventID);
@@ -186,12 +187,12 @@ int main(int argc, char* argv[])
             {
                 event.intensity[j] = getFloat(row_event->GetField(j));
             }
-            event.intensityP = getFloat(row_event->GetField(34));
-            for(int j = 0; j < 9; ++j) event.occupancy[j] = getInt(row_event->GetField(35+j));
-            event.MATRIX1 = getInt(row_event->GetField(44));
-            event.status = getInt(row_event->GetField(45));
-            event.source1 = getInt(row_event->GetField(46));
-            event.source2 = getInt(row_event->GetField(47));
+            event.intensityP = getFloat(row_event->GetField(33));
+            for(int j = 0; j < 9; ++j) event.occupancy[j] = getInt(row_event->GetField(34+j));
+            event.MATRIX1 = getInt(row_event->GetField(43));
+            event.status = getInt(row_event->GetField(44));
+            event.source1 = getInt(row_event->GetField(45));
+            event.source2 = getInt(row_event->GetField(46));
             event.weight = 1.;
             delete row_event;
             delete res_event;

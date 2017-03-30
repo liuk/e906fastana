@@ -207,10 +207,15 @@ bool Spill::goodReco()
 
 int Spill::triggerSet()
 {
-    if(spillID >= 303215 && spillID <= 310954) return -1;           //bad QIE range
-    if(spillID >= SPILLID_MIN_62 && spillID <= 409540) return -1;   //unstable trigger timing in #62
+    if(spillID >= 303215 && spillID <= 310954) return -1;           //bad QIE RF+00
+    //if(spillID >= 394287 && spillID <= 409540) return -1;           //Run3 commissioning
+    //if(spillID >= 394287 && spillID <= 414555) return -1;           //LD2 filled with LH2
+    //if(spillID >= 416207 && spillID <= 424180) return -1;           //Manual target control
+    if(spillID >= 482574 && spillID <= 484924) return -1;           //Magnet flipped
     if(spillID >= 526201 && spillID <= 526364) return -1;           //bad QIE timing in 67
-    if(spillID >= 581369 && spillID <= 582460) return -1;           //KMag off in #67
+    //if(spillID >= 581369 && spillID <= 582460) return -1;           //KMag off in #67
+    //if(spillID >= 684663 && spillID <= 689443) return -1;           //D3p chamber time window shifted
+
     if(spillID >= SPILLID_MIN_57 && spillID <= SPILLID_MAX_57) return 57;
     if(spillID >= SPILLID_MIN_59 && spillID <= SPILLID_MAX_59) return 59;
     if(spillID >= SPILLID_MIN_61 && spillID <= SPILLID_MAX_61) return 61;
@@ -263,6 +268,7 @@ void Spill::print()
     cout << " liveG2SEM:         " << liveG2SEM() << endl;
     cout << " liveProton:        " << liveProton << endl;
     cout << " QIEUnit:           " << QIEUnit() << endl;
+    cout << " Pedastal:          " << pedestal() << endl;
 }
 
 bool Track::goodTrack()
