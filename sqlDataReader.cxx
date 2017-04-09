@@ -240,7 +240,7 @@ int main(int argc, char* argv[])
         TString query = Form("SELECT numHits,numHitsSt1,numHitsSt2,numHitsSt3,numHitsSt4H,numHitsSt4V,"
             "chisq,chisq_target,chisq_dump,chisq_upstream,x1,y1,z1,x3,y3,z3,x0,y0,z0,xT,yT,"
             "xD,yD,px1,py1,pz1,px3,py3,pz3,px0,py0,pz0,pxT,pyT,pzT,pxD,pyD,pzD,roadID,"
-            "tx_PT,ty_PT,thbend,kmstatus FROM kTrack%s "
+            "tx_PT,ty_PT,thbend,kmstatus,z0x,z0y FROM kTrack%s "
             "WHERE runID=%d AND eventID=%d AND trackID in (%d,%d) ORDER BY charge DESC",
             suffix.Data(), event.runID, event.eventID, dimuon.posTrackID, dimuon.negTrackID);
 
@@ -301,6 +301,8 @@ int main(int argc, char* argv[])
         posTrack.ty_PT  = getFloat(row_track->GetField(40));
         posTrack.thbend = getFloat(row_track->GetField(41));
         posTrack.kmstatus = getInt(row_track->GetField(42));
+        posTrack.z0x    = getInt(row_track->GetField(43));
+        posTrack.z0y    = getInt(row_track->GetField(44));
         posTrack.pxv    = dimuon.px1;
         posTrack.pyv    = dimuon.py1;
         posTrack.pzv    = dimuon.pz1;
@@ -354,6 +356,8 @@ int main(int argc, char* argv[])
         negTrack.ty_PT  = getFloat(row_track->GetField(40));
         negTrack.thbend = getFloat(row_track->GetField(41));
         negTrack.kmstatus = getInt(row_track->GetField(42));
+        negTrack.z0x    = getInt(row_track->GetField(43));
+        negTrack.z0y    = getInt(row_track->GetField(44));
         negTrack.pxv    = dimuon.px2;
         negTrack.pyv    = dimuon.py2;
         negTrack.pzv    = dimuon.pz2;

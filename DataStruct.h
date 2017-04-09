@@ -139,8 +139,9 @@ public:
     float pxv, pyv, pzv;      //momentum when constrained to dimuon vertex
     float tx_PT, ty_PT;       //slope of track segments at prop. tubes
     float thbend;             //bend angle in KMAG
+    float z0x, z0y;           //beam line crossing position in X/Y-Z plane
 
-    ClassDef(Track, 6)
+    ClassDef(Track, 7)
 };
 
 #endif

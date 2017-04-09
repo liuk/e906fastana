@@ -246,6 +246,8 @@ int main(int argc, char* argv[])
             posTrack.ty_PT  = recPosTrack.getPTSlopeY();
             posTrack.thbend = atan(posTrack.px3/posTrack.pz3) - atan(posTrack.px1/posTrack.pz1);
             posTrack.kmstatus = recPosTrack.getKalmanStatus();
+            posTrack.z0x = recPosTrack.getXVertexPos().Z();
+            posTrack.z0y = recPosTrack.getYVertexPos().Z();
             posTrack.pxv = recDimuon.p_pos.Px();
             posTrack.pyv = recDimuon.p_pos.Py();
             posTrack.pzv = recDimuon.p_pos.Pz();
@@ -304,6 +306,8 @@ int main(int argc, char* argv[])
             negTrack.ty_PT  = recNegTrack.getPTSlopeY();
             negTrack.thbend = atan(negTrack.px3/negTrack.pz3) - atan(negTrack.px1/negTrack.pz1);
             negTrack.kmstatus = recNegTrack.getKalmanStatus();
+            negTrack.z0x = recNegTrack.getXVertexPos().Z();
+            negTrack.z0y = recNegTrack.getYVertexPos().Z();
             negTrack.pxv = recDimuon.p_neg.Px();
             negTrack.pyv = recDimuon.p_neg.Py();
             negTrack.pzv = recDimuon.p_neg.Pz();
