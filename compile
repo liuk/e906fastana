@@ -9,7 +9,7 @@ from optparse import OptionParser
 def compile(filename, kTracker = False, dataset = 'ALL'):
     ## ROOT part
     cflags = os.popen('root-config --cflags').readline().strip()
-    ldflags = os.popen('root-config --ldflags --glibs').readline().strip()
+    ldflags = os.popen('root-config --ldflags --libs').readline().strip()
 
     ## basic
     ldflags = ldflags + ' -L./ -lAnaUtil -Wl,--no-as-needed'
