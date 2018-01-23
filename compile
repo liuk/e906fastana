@@ -6,21 +6,21 @@ import re
 
 # compile with ROOT, Geant4, MySQL and BOOST
 def compile(filename):
-	## ROOT part
+    ## ROOT part
     cflags = os.popen('root-config --cflags').readline().strip()
-    ldflags = os.popen('root-config --ldflags --libs').readline().strip()
+    ldflags = os.popen('root-config --ldflags --glibs').readline().strip()
 
     ## basic
-    ldflags = ldflags + ' -L./ -lAnaUtil'
-    if os.path.exists('kTracker/libkTracker.so'):
-        os.system('cp kTracker/libkTracker.so .')
-        ldflags = ldflags + ' -L./ -lkTracker'
-    elif os.path.exists('kTracker/lib/libkTracker.so'):
-        os.system('cp kTracker/lib/libkTracker.so .')
-        ldflags = ldflags + ' -L./ -lkTracker'
+    ldflags = ldflags + ' -L./ -lAnaUtil -Wl,--no-as-needed'
+    if os.path.exists('kTracker/lib/libkTracker.so'):
+        cflags = cflags + ' -IkTracker/inc ' + os.popen('geant4-config --cflags').readline().strip()
+        ldflags = ldflags + ' -LkTracker/lib -lkTracker ' + os.popen('geant4-config --libs').readline().strip()
 
     ## data version
     cflags = cflags + ' -D' + dataset
+
+    print cflags
+    print ldflags
 
     os.system('g++ '+cflags+' -c '+filename+'.cxx')
     os.system('g++ -o '+filename+' '+filename+'.o '+ldflags)

@@ -18,6 +18,8 @@ ClassImp(Track)
 #define SPILLID_MAX_67 676224
 #define SPILLID_MIN_70 676498
 #define SPILLID_MAX_70 696455
+#define SPILLID_MIN_78 0
+#define SPILLID_MAX_78 -1
 
 Event::Event() : runID(-1), spillID(-1), eventID(-1), status(-1), MATRIX1(-1), weight(0.)
 {
@@ -222,6 +224,7 @@ int Spill::triggerSet()
     if(spillID >= SPILLID_MIN_62 && spillID <= SPILLID_MAX_62) return 62;
     if(spillID >= SPILLID_MIN_67 && spillID <= SPILLID_MAX_67) return 67;
     if(spillID >= SPILLID_MIN_70 && spillID <= SPILLID_MAX_70) return 70;
+    if(spillID >= SPILLID_MIN_78 && spillID <= SPILLID_MAX_78) return 78;
     return -1;
 }
 

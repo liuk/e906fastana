@@ -25,13 +25,13 @@ public:
     int MATRIX1;
     float weight;
 
-    int occupancy[9];      // 0 - 8 stands for D1 D2 D3 H1 H2 H3 H4 P1 P2
+    int occupancy[15];      // 0 - 8 stands for D1 D2 D3 H1 H2 H3 H4 P1 P2 D1L D1R D2L D2R D3L D3R
     float intensity[33];
     float intensityP;
 
-    int source1, source2;  //source of the eventID for mixing
+    int source1, source2;   //source of the eventID for mixing
 
-    ClassDef(Event, 5)
+    ClassDef(Event, 6)
 };
 
 class Dimuon : public TObject
@@ -141,7 +141,9 @@ public:
     float thbend;             //bend angle in KMAG
     float z0x, z0y;           //beam line crossing position in X/Y-Z plane
 
-    ClassDef(Track, 7)
+    unsigned short chammberIDs[30];    //chammber element ID list on all 30 planes
+
+    ClassDef(Track, 8)
 };
 
 #endif

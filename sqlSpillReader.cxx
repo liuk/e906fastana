@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
     server->Exec(Form("USE %s", argv[1]));
     cout << "Reading schema " << argv[1] << " and save to " << argv[2] << endl;
 
-    TString query = "SELECT runID,spillID FROM Spill ORDER BY spillID";
+    TString query = "SELECT runID,spillID FROM Spill WHERE spillID!=0 and spillID IS NOT NULL ORDER BY spillID";
 
     TSQLResult* res = server->Query(query.Data());
     int nSpillsRow = res->GetRowCount();

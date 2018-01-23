@@ -6,8 +6,8 @@
 #include <TTree.h>
 #include <TString.h>
 
-#include "kTracker/SRawEvent.h"
-#include "kTracker/SRecEvent.h"
+#include "SRawEvent.h"
+#include "SRecEvent.h"
 
 #include "DataStruct.h"
 
@@ -245,7 +245,7 @@ int main(int argc, char* argv[])
             posTrack.tx_PT  = recPosTrack.getPTSlopeX();
             posTrack.ty_PT  = recPosTrack.getPTSlopeY();
             posTrack.thbend = atan(posTrack.px3/posTrack.pz3) - atan(posTrack.px1/posTrack.pz1);
-            posTrack.kmstatus = recPosTrack.getKalmanStatus();
+            posTrack.kmstatus = recPosTrack.isKalmanFitted();
             posTrack.z0x = recPosTrack.getXVertexPos().Z();
             posTrack.z0y = recPosTrack.getYVertexPos().Z();
             posTrack.pxv = recDimuon.p_pos.Px();
@@ -305,7 +305,7 @@ int main(int argc, char* argv[])
             negTrack.tx_PT  = recNegTrack.getPTSlopeX();
             negTrack.ty_PT  = recNegTrack.getPTSlopeY();
             negTrack.thbend = atan(negTrack.px3/negTrack.pz3) - atan(negTrack.px1/negTrack.pz1);
-            negTrack.kmstatus = recNegTrack.getKalmanStatus();
+            negTrack.kmstatus = recNegTrack.isKalmanFitted();
             negTrack.z0x = recNegTrack.getXVertexPos().Z();
             negTrack.z0y = recNegTrack.getYVertexPos().Z();
             negTrack.pxv = recDimuon.p_neg.Px();
