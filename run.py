@@ -10,7 +10,7 @@ def runCmd(cmd):
     os.system(cmd)
 
 
-username = os.enviorn['USER']
+username = os.environ['USER']
 
 ## command line parser
 parser = OptionParser('Usage: %prog executable sources targets [options]')
@@ -27,7 +27,7 @@ productionInfo = [line.strip().split()[0] for line in open(options.list)]
 ## prepare the command list
 cmds = []
 for pro in productionInfo:
-    cmd = options.command.replace('$server', pro[0]).replace('$run', pro[1])
+    cmd = options.command.replace('$run', pro).replace('$loc', '%s/%s' % (pro[0:2], pro[2:4]))
     cmds.append(cmd)
 
 ## long loop running the jobs on console
