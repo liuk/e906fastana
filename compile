@@ -3,18 +3,19 @@
 import os
 import sys
 import re
+from optparse import OptionParser
 
 # compile with ROOT, Geant4, MySQL and BOOST
-def compile(filename):
+def compile(filename, kTracker = False, dataset = 'ALL'):
     ## ROOT part
     cflags = os.popen('root-config --cflags').readline().strip()
     ldflags = os.popen('root-config --ldflags --glibs').readline().strip()
 
     ## basic
     ldflags = ldflags + ' -L./ -lAnaUtil -Wl,--no-as-needed'
-    if os.path.exists('kTracker/lib/libkTracker.so'):
+    if kTracker and os.path.exists('kTracker/lib/libkTracker.so'):
         cflags = cflags + ' -IkTracker/inc ' + os.popen('geant4-config --cflags').readline().strip()
-        ldflags = ldflags + ' -LkTracker/lib -lkTracker ' + os.popen('geant4-config --libs').readline().strip()
+        ldflags = ldflags + ' -LkTracker/lib -lkTracker ' + os.popen('geant4-config --libs').readline().strip() + ' -lG4zlib'
 
     ## data version
     cflags = cflags + ' -D' + dataset
@@ -26,27 +27,28 @@ def compile(filename):
     os.system('g++ -o '+filename+' '+filename+'.o '+ldflags)
     os.system('rm '+filename+'.o')
 
+## command line parser
+parser = OptionParser('Usage: %prog source [options]')
+parser.add_option('-d', '--dataset', type = 'string', dest = 'dataset', help = 'Dataset identifier', default = 'ALL')
+parser.add_option('-k', '--kTracker', action = 'store_true', dest = 'kTracker', help = 'Enable compile with kTracker lib', default = False)
+(options, sysargs) = parser.parse_args()
+
 # make sure it exists
-if not os.path.isfile(sys.argv[1].replace('.cxx', '')+'.cxx'):
+if not os.path.isfile(sysargs[0].replace('.cxx', '')+'.cxx'):
     print 'File does not exist!'
     sys.exit(1)
 
 # extract the path and source file name
-args = re.split('/', sys.argv[1])
+args = re.split('/', sysargs[0])
 targetName = args[-1].replace('.cxx', '')
 sourceName = targetName + '.cxx'
-sourcePath = sys.argv[1].replace('.cxx', '').replace(targetName, '')
+sourcePath = sysargs[0].replace('.cxx', '').replace(targetName, '')
 
-dataset = 'ALL'
-if len(sys.argv) > 2:
-    dataset = sys.argv[2].upper()
-
-# copy the source file to KTRACKER_ROOT, compile an delete it afterwards
 if len(args) == 1 or (len(args) == 2 and args[0] == '.'):
-    compile(targetName)
+    compile(targetName, options.kTracker)
 elif os.path.isfile(sourceName):
     print 'File already exists in both KTRACKER_ROOT and '+sys.argv[1].replace(sourceName, '')+'!! Please check.'
 else:
     os.system('cp '+sourcePath+'/'+sourceName+' '+sourceName)
-    compile(targetName)
+    compile(targetName, options.kTracker)
     os.system('rm '+sourceName)

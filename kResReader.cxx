@@ -6,6 +6,7 @@
 #include <TTree.h>
 #include <TString.h>
 
+#include "GlobalConsts.h"
 #include "SRawEvent.h"
 #include "SRecEvent.h"
 

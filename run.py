@@ -7,6 +7,7 @@ from optparse import OptionParser
 
 def runCmd(cmd):
     print '  >', cmd
+    os.system(cmd)
 
 
 username = os.enviorn['USER']
@@ -20,7 +21,8 @@ parser.add_option('-e', '--exe', type = 'string', dest = 'exe', help = 'The proc
 (options, args) = parser.parse_args()
 
 ## parse the run list
-productionInfo = [line.strip().split() for line in open(options.list) if len(line.strip().split()) == 3]
+#productionInfo = [line.strip().split()[0] for line in open(options.list) if len(line.strip().split()) == 3]
+productionInfo = [line.strip().split()[0] for line in open(options.list)]
 
 ## prepare the command list
 cmds = []
@@ -40,5 +42,4 @@ while nSubmitted != len(cmds) or nRunning != 0:
 
         runCmd(cmds[nSubmitted])
         nSubmitted = nSubmitted + 1
-
     time.sleep(30)
