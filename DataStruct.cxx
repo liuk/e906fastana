@@ -54,23 +54,24 @@ float Event::weightedIntensity(float unit, float ped)
 
 bool Dimuon::goodDimuon(int polarity)
 {
-    if(fabs(dx) > 2. || fabs(dy) > 2.) return false;
-    if(dz < -300. || dz > 200.) return false;
-    if(fabs(dpx) > 3. || fabs(dpy) > 3.) return false;
-    if(dpz < 30. || dpz > 120.) return false;
+    if(fabs(dx) > 0.26 || fabs(dy - 1.6) > 0.24) return false;
+    if(dz < -250. || dz > 200.) return false;
+    if(fabs(dpx) > 2.2 || fabs(dpy) > 2.4) return false;
+    if(dpz < 40. || dpz > 112.) return false;
     if(x1 < 0. || x1 > 1.) return false;
     if(x2 < 0. || x2 > 1.) return false;
-    if(xF < -1. || xF > 1.) return false;
-    if(fabs(trackSeparation) > 250.) return false;
-    if(chisq_dimuon > 15.) return false;
-    if(polarity*px1 < 0. || polarity*px2 > 0.) return false;
+    if(xF < -0.2 || xF > 0.9) return false;
+    //if(fabs(trackSeparation) > 250.) return false;
+    if(chisq_dimuon > 14.) return false;
+    if(fabs(costh) > 0.5) return false;
+    //if(polarity*px1 < 0. || polarity*px2 > 0.) return false;
 
     return true;
 }
 
 bool Dimuon::targetDimuon()
 {
-    if(dz > -60. || dz < -300.) return false;
+    if(dz > -250. || dz < -20.) return false;
     return true;
 }
 
@@ -276,19 +277,23 @@ void Spill::print()
 
 bool Track::goodTrack()
 {
-    if(nHits <= 14) return false;
-    if(chisq/(nHits - 5) > 5.) return false;
+    if(nHits < 14) return false;
+    if(chisq/(nHits - 5) > 12.) return false;
+    if(fabs(yT - 1.6) > 14.) return false;
+    if(fabs(yD - 1.6) > 21.) return false;
+    if(fabs(pxT) > 4.5) return false;
+    if(fabs(pyT) > 3.) return false;
     if(z0 < -400. || z0 > 200.) return false;
     if(roadID == 0) return false;
-    if(nHits < 18 && pz1 < 18.) return false;
+    if(pz1 < 10 || pz1 > 75) return false;
 
     return true;
 }
 
 bool Track::targetTrack()
 {
-    if(z0 <= -300. || z0 >= 0.) return false;
-    if(chisq_dump - chisq_target < 10.) return false;
+    if(z0 <= -290. || z0 >= 10.) return false;
+    if(chisq_target/chisq_dump > 0.9) return false;
 
     return true;
 }

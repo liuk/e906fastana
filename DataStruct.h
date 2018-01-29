@@ -37,7 +37,7 @@ public:
 class Dimuon : public TObject
 {
 public:
-    bool goodDimuon(int polarity = 1);
+    bool goodDimuon(int polarity = -1);
     bool targetDimuon();
     bool dumpDimuon();
 

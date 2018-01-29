@@ -34,7 +34,7 @@ for pro in productionInfo:
 nSubmitted = 0
 nRunning = 1
 while nSubmitted != len(cmds) or nRunning != 0:
-    nRunning = int(os.popen('pgrep -u %s %s | wc -l' & (username, options.exe)).read().strip())
+    nRunning = int(os.popen('pgrep -u %s %s | wc -l' % (username, options.exe)).read().strip())
     print nSubmitted, 'nSubmitted, will try to submit', options.nJobsMax - nRunning, 'jobs this time,', len(cmds) - nSubmitted, 'to go'
     for i in range(nRunning, options.nJobsMax):
         if nSubmitted >= len(cmds):
