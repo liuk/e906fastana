@@ -71,7 +71,7 @@ bool Dimuon::goodDimuon(int polarity)
 
 bool Dimuon::targetDimuon()
 {
-    if(dz > -250. || dz < -20.) return false;
+    if(dz < -250. || dz > -20.) return false;
     return true;
 }
 
