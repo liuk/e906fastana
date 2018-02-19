@@ -54,15 +54,15 @@ float Event::weightedIntensity(float unit, float ped)
 
 bool Dimuon::goodDimuon(int polarity)
 {
-    if(fabs(dx) > 0.26 || fabs(dy - 1.6) > 0.24) return false;
-    if(dz < -250. || dz > 200.) return false;
-    if(fabs(dpx) > 2.2 || fabs(dpy) > 2.4) return false;
-    if(dpz < 40. || dpz > 112.) return false;
+    if(fabs(dx) > 0.3 || fabs(dy - 1.6) > 0.24) return false;
+    if(dz < -290. || dz > 200.) return false;
+    if(fabs(dpx) > 2.5 || fabs(dpy) > 2.5) return false;
+    if(dpz < 36. || dpz > 115.) return false;
     if(x1 < 0. || x1 > 1.) return false;
     if(x2 < 0. || x2 > 1.) return false;
     if(xF < -0.2 || xF > 0.9) return false;
-    //if(fabs(trackSeparation) > 250.) return false;
-    if(chisq_dimuon > 14.) return false;
+    if(fabs(trackSeparation) > 300.) return false;
+    if(chisq_dimuon > 25.) return false;
     if(fabs(costh) > 0.5) return false;
     //if(polarity*px1 < 0. || polarity*px2 > 0.) return false;
 
@@ -294,6 +294,8 @@ bool Track::targetTrack()
 {
     if(z0 <= -290. || z0 >= 10.) return false;
     if(chisq_target/chisq_dump > 0.9) return false;
+    if(chisq_target > 25.) return false;
+    if(xD*xD + (yD - 1.6)*(yD - 1.6) < 16.) return false;
 
     return true;
 }
@@ -302,6 +304,7 @@ bool Track::dumpTrack()
 {
     if(z0 <= 0. && z0 >= 150.) return false;
     if(chisq_target - chisq_dump < 10.) return false;
+    if(targetTrack()) return false;
 
     return true;
 }

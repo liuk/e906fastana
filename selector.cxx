@@ -56,7 +56,8 @@ int main(int argc, char* argv[])
         if(!dimuon.goodDimuon(polarity)) continue;
         if(!((posTrack.roadID > 0)^(negTrack.roadID > 0))) continue;
         if(!(posTrack.goodTrack() && negTrack.goodTrack())) continue;
-
+        if(posTrack.nHits+negTrack.nHits <= 28) continue;
+    
         if(target)
         {
             if(!dimuon.targetDimuon()) continue;
