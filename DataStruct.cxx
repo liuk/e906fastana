@@ -83,7 +83,8 @@ Spill::Spill() : spillID(-1), quality(-1), targetPos(-1), TARGPOS_CONTROL(-1), n
 
 bool Spill::goodSpill()
 {
-    return skipflag || (goodTargetPos() && goodScaler() && goodBeam() && goodBeamDAQ() && goodMagnet() && goodReco());
+    //return skipflag || (goodTargetPos() && goodScaler() && goodBeam() && goodBeamDAQ() && goodMagnet() && goodReco());
+    return skipflag || (quality == 0);
 }
 
 bool Spill::goodTargetPos()

@@ -105,7 +105,7 @@ public:
     float KMAG;
     float FMAG;
 
-    bool skipflag;     // will be true for MC data or random-mixing data
+    bool skipflag;     // will be true for MC data or random-mixing data, to overide the spill quality check
 
     ClassDef(Spill, 6)
 };

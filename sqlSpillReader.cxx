@@ -15,22 +15,22 @@ using namespace std;
 
 Spill* gSpill;
 
-int getInt(const char* row)
+int getInt(const char* row, int default_val = -9999)
 {
     if(row == NULL)
     {
         gSpill->log("Integer content is missing.");
-        return -9999;
+        return default_val;
     }
     return atoi(row);
 }
 
-float getFloat(const char* row)
+float getFloat(const char* row, float default_val= -9999.)
 {
     if(row == NULL)
     {
         gSpill->log("Floating content is missing.");
-        return -9999.;
+        return default_val;
     }
     return atof(row);
 }
@@ -55,14 +55,12 @@ int main(int argc, char* argv[])
 
     char query[5000];
     //sprintf(query, "SELECT spillID FROM Spill WHERE runID in (SELECT run FROM summary.production WHERE ktracked=1) ORDER BY spillID");
-    sprintf(query, "SELECT runID,spillID FROM Spill ORDER BY spillID");
+    sprintf(query, "SELECT runID,spillID,liveProton,targetPos,dataQuality FROM Spill WHERE spillID IS NOT NULL ORDER BY spillID");
 
     TSQLResult* res = server->Query(query);
     int nSpillsRow = res->GetRowCount();
 
-    int nBadSpill_record = 0;
-    int nBadSpill_duplicate = 0;
-    int nBadSpill_quality = 0;
+    int nBadSpills = 0;
     for(int i = 0; i < nSpillsRow; ++i)
     {
         if(i % 100 == 0)
@@ -75,8 +73,12 @@ int main(int argc, char* argv[])
         int runID = getInt(row->GetField(0));
         spill.spillID = getInt(row->GetField(1));
         spill.trigSet = spill.triggerSet();
+        spill.liveProton = getFloat(row->GetField(2));
+        spill.targetPos = getInt(row->GetField(3), -1);
+        spill.quality = getInt(row->GetField(4), -1);
         delete row;
 
+        /*
         //magnet configuration
         sprintf(query, "SELECT value FROM Beam WHERE spillID=%d AND name IN ('F:NM3S','F:NM4AN') ORDER BY name", spill.spillID);
         TSQLResult* res_spill = server->Query(query);
@@ -214,10 +216,11 @@ int main(int argc, char* argv[])
             row_spill = res_spill->Next(); spill.TSGoBOS            = getFloat(row_spill->GetField(0)); delete row_spill;
         }
         delete res_spill;
+        */
 
         if(!spill.goodSpill())
         {
-            ++nBadSpill_quality;
+            ++nBadSpills;
             spill.log("spill bad");
             spill.print();
         }
@@ -228,8 +231,7 @@ int main(int argc, char* argv[])
     delete res;
 
     cout << "sqlSpillReader finished successfully." << endl;
-    cout << saveTree->GetEntries() << " good spills, " << nBadSpill_record << " spills have insufficient info in database, "
-         << nBadSpill_duplicate << " spills have duplicate entries in database, " << nBadSpill_quality << " rejected because of bad quality." << endl;
+    cout << saveTree->GetEntries() << " good spills, " << nBadSpills << " bad spills." << endl;
 
     saveFile->cd();
     saveTree->Write();
