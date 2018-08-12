@@ -230,8 +230,8 @@ int main(int argc, char* argv[])
     }
     delete res;
 
-    cout << "sqlSpillReader finished successfully." << endl;
     cout << saveTree->GetEntries() << " good spills, " << nBadSpills << " bad spills." << endl;
+    cout << "sqlSpillReader finished successfully." << endl;
 
     saveFile->cd();
     saveTree->Write();

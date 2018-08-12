@@ -27,7 +27,7 @@ public:
     int MATRIX1;
     float weight;
 
-    int occupancy[9];      // 0 - 8 stands for D1 D2 D3 H1 H2 H3 H4 P1 P2
+    float occupancy[15];      // 0 - 14 stands for D1 D2 D3 H1 H2 H3 H4 P1 P2 D1L D1R D2L D2R D3L D3R
     float intensity[33];
 
     int sourceID1, sourceID2;  //source of the eventID for mixing
