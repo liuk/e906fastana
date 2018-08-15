@@ -50,4 +50,4 @@ DataStructDict.cxx: DataStruct.h LinkDef.h
 
 clean:
 	@echo "Cleanning everything ... "
-	@rm $(OBJS) $(SLIBS) *Dict.cxx *Dict.h
+	@rm $(OBJS) *.so *Dict.cxx *Dict.h

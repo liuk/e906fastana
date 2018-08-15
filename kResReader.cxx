@@ -6,8 +6,8 @@
 #include <TTree.h>
 #include <TString.h>
 
-#include "kTracker/SRawEvent.h"
-#include "kTracker/SRecEvent.h"
+#include "kTracker/inc/SRawEvent.h"
+#include "kTracker/inc/SRecEvent.h"
 
 #include "DataStruct.h"
 
@@ -32,27 +32,23 @@ int main(int argc, char* argv[])
 
     //check if raw event exists
     SRawEvent* rawEvent = NULL;
+    SRawEvent* orgEvent = NULL;
     if(dataTree->FindBranch("rawEvent") != NULL)
     {
         mcdata = TString(dataTree->FindBranch("rawEvent")->GetClassName()) == "SRawMCEvent";
         rawEvent = mcdata ? (new SRawMCEvent) : (new SRawEvent);
-        dataTree->SetBranchAddress("rawEvent", &rawEvent);
-    }
-
-    //check if original event info exists, if not, read event input
-    SRawEvent* orgEvent = NULL;
-    if(dataTree->FindBranch("orgEvent") != NULL)
-    {
         orgEvent = mcdata ? (new SRawMCEvent) : (new SRawEvent);
+        dataTree->SetBranchAddress("rawEvent", &rawEvent);
         dataTree->SetBranchAddress("orgEvent", &orgEvent);
     }
 
     // output data structure
     Dimuon* p_dimuon = new Dimuon; Dimuon& dimuon = *p_dimuon;
-    Spill* p_spill = new Spill; Spill& spill = *p_spill;
-    Event* p_event = new Event; Event& event = *p_event;
-    Track* p_posTrack = new Track; Track& posTrack = *p_posTrack;
-    Track* p_negTrack = new Track; Track& negTrack = *p_negTrack;
+    Spill*  p_spill = new Spill; Spill& spill = *p_spill;
+    Event*  p_event = new Event; Event& event = *p_event;
+    Track*  p_posTrack = new Track; Track& posTrack = *p_posTrack;
+    Track*  p_negTrack = new Track; Track& negTrack = *p_negTrack;
+    Dimuon* p_tdimuon = new Dimuon; Dimuon& tdimuon = *p_dimuon;        //tdimuon stands for truce dimuon, only used for MC
 
     TFile* saveFile = new TFile(argv[2], "recreate");
     TTree* saveTree = new TTree("save", "save");
@@ -62,9 +58,10 @@ int main(int argc, char* argv[])
     saveTree->Branch("spill", &p_spill, 256000, 99);
     saveTree->Branch("posTrack", &p_posTrack, 256000, 99);
     saveTree->Branch("negTrack", &p_negTrack, 256000, 99);
+    if(mcdata) saveTree->Branch("tdimuon", &p_tdimuon, 256000, 99);
 
     //Initialize spill information accordingly
-    spill.skipflag = mcdata || mixdata;
+    spill.skipflag = mcdata || mixdata || argc <= 4;
     map<int, Spill> spillBank;
     if(!spill.skipflag)
     {
@@ -76,26 +73,6 @@ int main(int argc, char* argv[])
         {
             spillTree->GetEntry(i);
             if(spill.goodSpill()) spillBank.insert(map<int, Spill>::value_type(spill.spillID, spill));
-        }
-    }
-
-    //Initialize the event info bank
-    map<int, Event> eventBank;
-    if(orgEvent == NULL && argc > 5)
-    {
-        TFile* eventFile = TFile::Open(argv[5]);
-        if(eventFile == 0x0)
-        {
-            cout << "No good spill in this run!" << endl;
-            exit(EXIT_SUCCESS);
-        }
-
-        TTree* eventTree = (TTree*)eventFile->Get("save");
-        eventTree->SetBranchAddress("Event", &p_event);
-        for(int i = 0; i < eventTree->GetEntries(); ++i)
-        {
-            eventTree->GetEntry(i);
-            eventBank.insert(map<int, Event>::value_type(event.eventID, event));
         }
     }
 
@@ -111,10 +88,10 @@ int main(int argc, char* argv[])
         }
 
         //general event level info
-        event.runID = recEvent->getRunID();
+        event.runID   = recEvent->getRunID();
         event.spillID = recEvent->getSpillID();
         event.eventID = recEvent->getEventID();
-        event.status = recEvent->getRecStatus();
+        event.status  = recEvent->getRecStatus();
 
         //check spill valid first
         if(!spill.skipflag && event.spillID != spill.spillID)
@@ -128,56 +105,71 @@ int main(int argc, char* argv[])
         {
             event.MATRIX1 = rawEvent->isEmuTriggered() ? 1 : -1;
             event.weight = ((SRawMCEvent*)rawEvent)->weight;
-            if(orgEvent != NULL)
-            {
-                for(int j = -16; j <= 16; ++j) event.intensity[j+16] = rawEvent->getIntensity(j);
-                event.occupancy[0] = orgEvent->getNHitsInD1();
-                event.occupancy[1] = orgEvent->getNHitsInD2();
-                event.occupancy[2] = orgEvent->getNHitsInD3();
-                event.occupancy[3] = orgEvent->getNHitsInH1();
-                event.occupancy[4] = orgEvent->getNHitsInH2();
-                event.occupancy[5] = orgEvent->getNHitsInH3();
-                event.occupancy[6] = orgEvent->getNHitsInH4();
-                event.occupancy[7] = orgEvent->getNHitsInP1();
-                event.occupancy[8] = orgEvent->getNHitsInP2();
-            }
-            else
-            {
-                for(int j = 0; j < 9; ++j) event.occupancy[j] = 0;
-            }
-        }
-        else if(mixdata)
-        {
-            event.MATRIX1 = 1;
-            event.weight = 1.;
-            event.sourceID1 = recEvent->getSourceID1();
-            event.sourceID2 = recEvent->getSourceID2();
-            if(eventBank.find(event.sourceID1) == eventBank.end() || eventBank.find(event.sourceID2) == eventBank.end()) continue;
-            for(int j = 0; j < 33; ++j) event.intensity[j] = eventBank[event.sourceID1].intensity[j] + eventBank[event.sourceID2].intensity[j];
-            for(int j = 0; j < 9; ++j)  event.occupancy[j] = eventBank[event.sourceID1].occupancy[j] + eventBank[event.sourceID2].occupancy[j];
+
+            for(int j = -16; j <= 16; ++j) event.intensity[j+16] = rawEvent->getIntensity(j);
+            event.occupancy[0] = orgEvent->getNHitsInD1();
+            event.occupancy[1] = orgEvent->getNHitsInD2();
+            event.occupancy[2] = orgEvent->getNHitsInD3();
+            event.occupancy[3] = orgEvent->getNHitsInH1();
+            event.occupancy[4] = orgEvent->getNHitsInH2();
+            event.occupancy[5] = orgEvent->getNHitsInH3();
+            event.occupancy[6] = orgEvent->getNHitsInH4();
+            event.occupancy[7] = orgEvent->getNHitsInP1();
+            event.occupancy[8] = orgEvent->getNHitsInP2();
+
+            TVector3 p0 = ((SRawMCEvent*)rawEvent)->p_vertex[0];
+            TVector3 p1 = ((SRawMCEvent*)rawEvent)->p_vertex[1];
+            TVector3 v  = ((SRawMCEvent*)rawEvent)->vtx;
+
+            tdimuon.dimuonID = 0;
+            tdimuon.posTrackID = 0;
+            tdimuon.negTrackID = 0;
+            tdimuon.chisq_dimuon = 0.;
+            tdimuon.trackSeparation = 0.;
+            tdimuon.dx = v.X();
+            tdimuon.dy = v.Y();
+            tdimuon.dz = v.Z();
+            tdimuon.dpx = (p0 + p1).Px();
+            tdimuon.dpy = (p0 + p1).Py();
+            tdimuon.dpz = (p0 + p1).Pz();
+            tdimuon.px1 = p0.Px();
+            tdimuon.py1 = p0.Py();
+            tdimuon.pz1 = p0.Pz();
+            tdimuon.px2 = p1.Px();
+            tdimuon.py2 = p1.Py();
+            tdimuon.pz2 = p1.Pz();
+            tdimuon.mass = ((SRawMCEvent*)rawEvent)->mass;
+            tdimuon.xF   = ((SRawMCEvent*)rawEvent)->xF;
+            tdimuon.x1   = ((SRawMCEvent*)rawEvent)->x1;
+            tdimuon.x2   = ((SRawMCEvent*)rawEvent)->x2;
+            tdimuon.pT   = ((SRawMCEvent*)rawEvent)->pT;
+            tdimuon.costh = ((SRawMCEvent*)rawEvent)->costh;
         }
         else
         {
-            event.MATRIX1 = recEvent->isTriggeredBy(SRawEvent::MATRIX1) ? 1 : -1;
             event.weight = 1.;
-            if(orgEvent != NULL && orgEvent->getEventID() == recEvent->getEventID()) //notice the short circuiting
+            if(mixdata)
             {
-                for(int j = -16; j <= 16; ++j) event.intensity[j+16] = rawEvent->getIntensity(j);
-                event.occupancy[0] = orgEvent->getNHitsInD1();
-                event.occupancy[1] = orgEvent->getNHitsInD2();
-                event.occupancy[2] = orgEvent->getNHitsInD3();
-                event.occupancy[3] = orgEvent->getNHitsInH1();
-                event.occupancy[4] = orgEvent->getNHitsInH2();
-                event.occupancy[5] = orgEvent->getNHitsInH3();
-                event.occupancy[6] = orgEvent->getNHitsInH4();
-                event.occupancy[7] = orgEvent->getNHitsInP1();
-                event.occupancy[8] = orgEvent->getNHitsInP2();
+                event.MATRIX1 = 1;
+                event.sourceID1 = recEvent->getSourceID1();
+                event.sourceID2 = recEvent->getSourceID2();
             }
             else
             {
-                for(int j = 0; j < 33; ++j) event.intensity[j] = eventBank[event.eventID].intensity[j];
-                for(int j = 0; j < 9; ++j)  event.occupancy[j] = eventBank[event.eventID].occupancy[j];
+                event.MATRIX1 = recEvent->isTriggeredBy(SRawEvent::MATRIX1) ? 1 : -1;
             }
+
+            
+            for(int j = -16; j <= 16; ++j) event.intensity[j+16] = rawEvent->getIntensity(j);
+            event.occupancy[0] = orgEvent->getNHitsInD1();
+            event.occupancy[1] = orgEvent->getNHitsInD2();
+            event.occupancy[2] = orgEvent->getNHitsInD3();
+            event.occupancy[3] = orgEvent->getNHitsInH1();
+            event.occupancy[4] = orgEvent->getNHitsInH2();
+            event.occupancy[5] = orgEvent->getNHitsInH3();
+            event.occupancy[6] = orgEvent->getNHitsInH4();
+            event.occupancy[7] = orgEvent->getNHitsInP1();
+            event.occupancy[8] = orgEvent->getNHitsInP2();
         }
 
         for(int j = 0; j < recEvent->getNDimuons(); ++j)
@@ -185,7 +177,7 @@ int main(int argc, char* argv[])
             ++nDimuons;
             SRecDimuon recDimuon = recEvent->getDimuon(j);
 
-            dimuon.dimuonID = nDimuons;
+            dimuon.dimuonID   = nDimuons;
             dimuon.posTrackID = recDimuon.trackID_pos;
             dimuon.negTrackID = recDimuon.trackID_neg;
             dimuon.px1 = recDimuon.p_pos.Px();
@@ -210,11 +202,13 @@ int main(int argc, char* argv[])
             dimuon.chisq_dimuon    = recDimuon.chisq_kf;
             dimuon.trackSeparation = recDimuon.vtx_pos.Z() - recDimuon.vtx_neg.Z();
 
+            /*
             //if(!dimuon.goodDimuon()) continue;
             if(dimuon.mass < 0.5 || dimuon.mass > 10. || dimuon.chisq_dimuon > 25. || dimuon.x1 < 0. || dimuon.x1 > 1.
                || dimuon.x2 < 0. || dimuon.x2 > 1. || dimuon.xF < -1. || dimuon.xF > 1. || fabs(dimuon.dx) > 2.
                || fabs(dimuon.dy) > 2. || dimuon.dz < -300. || dimuon.dz > 300. || fabs(dimuon.dpx) > 3.
                || fabs(dimuon.dpy) > 3. || dimuon.dpz < 30. || dimuon.dpz > 120. || fabs(dimuon.trackSeparation) > 300.) continue;
+            */
 
             SRecTrack recPosTrack = recEvent->getTrack(dimuon.posTrackID);
             posTrack.trackID   = recDimuon.trackID_pos;

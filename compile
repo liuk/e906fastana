@@ -13,9 +13,13 @@ def compile(filename):
     ## basic
     ldflags = ldflags + ' -L./ -lAnaUtil'
     if os.path.exists('kTracker/libkTracker.so'):
+        cflags  = cflags  + ' ' + os.popen('geant4-config --cflags').readline().strip()
+        ldflags = ldflags + ' ' + os.popen('geant4-config --libs').readline().strip()
         os.system('cp kTracker/libkTracker.so .')
         ldflags = ldflags + ' -L./ -lkTracker'
     elif os.path.exists('kTracker/lib/libkTracker.so'):
+        cflags  = cflags  + ' ' + os.popen('geant4-config --cflags').readline().strip()
+        ldflags = ldflags + ' ' + os.popen('geant4-config --libs').readline().strip()
         os.system('cp kTracker/lib/libkTracker.so .')
         ldflags = ldflags + ' -L./ -lkTracker'
 
