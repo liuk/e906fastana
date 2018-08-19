@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
     Event*  p_event = new Event; Event& event = *p_event;
     Track*  p_posTrack = new Track; Track& posTrack = *p_posTrack;
     Track*  p_negTrack = new Track; Track& negTrack = *p_negTrack;
-    Dimuon* p_tdimuon = new Dimuon; Dimuon& tdimuon = *p_dimuon;        //tdimuon stands for truce dimuon, only used for MC
+    Dimuon* p_tdimuon = new Dimuon; Dimuon& tdimuon = *p_tdimuon;        //tdimuon stands for truce dimuon, only used for MC
 
     TFile* saveFile = new TFile(argv[2], "recreate");
     TTree* saveTree = new TTree("save", "save");
@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
     if(mcdata) saveTree->Branch("tdimuon", &p_tdimuon, 256000, 99);
 
     //Initialize spill information accordingly
-    spill.skipflag = mcdata || mixdata || argc <= 4;
+    spill.skipflag = (argc <= 4);
     map<int, Spill> spillBank;
     if(!spill.skipflag)
     {
